@@ -1,6 +1,6 @@
 // Default chapters list for JEE Main syllabus
 const DEFAULT_CHAPTERS = [
-  // Physics
+  // Physics Class 11
   { id: 'p1', name: 'Physics and Measurement', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'p2', name: 'Kinematics', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'p3', name: 'Laws of Motion', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
@@ -11,52 +11,65 @@ const DEFAULT_CHAPTERS = [
   { id: 'p8', name: 'Thermodynamics', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'p9', name: 'Kinetic Theory of Gases', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'p10', name: 'Oscillations and Waves', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p11', name: 'Electrostatics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p12', name: 'Current Electricity', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p13', name: 'Magnetic Effects of Current and Magnetism', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p14', name: 'Electromagnetic Induction and AC', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p15', name: 'Electromagnetic Waves', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p16', name: 'Optics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p17', name: 'Dual Nature of Matter and Radiation', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p18', name: 'Atoms and Nuclei', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'p19', name: 'Electronic Devices', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'p20', name: 'Experimental Skills', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
 
-  // Chemistry
+  // Physics Class 12 (+2)
+  { id: 'p11', name: 'Electrostatics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p12', name: 'Current Electricity & Capacitance', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p13', name: 'Moving Charges and Magnetism', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p14', name: 'Magnetism and Matter', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p15', name: 'Electromagnetic Induction and AC', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p16', name: 'Electromagnetic Waves', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p17', name: 'Ray Optics and Optical Instruments', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p18', name: 'Wave Optics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p19', name: 'Modern Physics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p21', name: 'Semiconductor Electronics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+
+  // Chemistry Class 11
   { id: 'c1', name: 'Some Basic Concepts in Chemistry', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c2', name: 'Atomic Structure', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c3', name: 'Chemical Bonding & Molecular Structure', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c4', name: 'Chemical Thermodynamics', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c5', name: 'Solutions', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c6', name: 'Equilibrium', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c7', name: 'Redox Reactions & Electrochemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c8', name: 'Chemical Kinetics', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c9', name: 'Classification of Elements & Periodicity', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c10', name: 'p-Block Elements', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c11', name: 'd- and f-Block Elements', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c12', name: 'Coordination Compounds', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c13', name: 'Organic Chemistry Principles & Techniques', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'c14', name: 'Hydrocarbons', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c15', name: 'Organic Compounds Containing Halogens', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c16', name: 'Organic Compounds Containing Oxygen', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c17', name: 'Organic Compounds Containing Nitrogen', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c18', name: 'Biomolecules', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'c19', name: 'Principles Related to Practical Chemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
 
-  // Mathematics
+  // Chemistry Class 12 (+2)
+  { id: 'c5', name: 'Solutions', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c7', name: 'Electrochemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c8', name: 'Chemical kinetics', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c11', name: 'The d and f block elements', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c12', name: 'Co-ordination compounds', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c15', name: 'Haloalkanes and Haloarenes, Stereochemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c16', name: 'Alcohol Phenols and Ethers', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c17', name: 'Aldehydes and Ketones', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c20', name: 'Carboxylic acids', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c21', name: 'Amines', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c18', name: 'Biomolecules', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c10', name: 'The p-block elements (XII)', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+
+  // Mathematics Class 11
   { id: 'm1', name: 'Sets, Relations and Functions', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'm2', name: 'Complex Numbers & Quadratic Equations', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm3', name: 'Matrices and Determinants', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'm4', name: 'Permutations and Combinations', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'm5', name: 'Sequences and Series', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm6', name: 'Limits, Continuity & Differentiability', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm7', name: 'Integral Calculus', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm8', name: 'Differential Equations', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
   { id: 'm9', name: 'Coordinate Geometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm10', name: 'Three Dimensional Geometry', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm11', name: 'Vector Algebra', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm12', name: 'Statistics and Probability', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
-  { id: 'm13', name: 'Trigonometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] }
+  { id: 'm13', name: 'Trigonometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+
+  // Mathematics Class 12 (+2)
+  { id: 'm3', name: 'Relations, Functions and Real functions', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm6', name: 'Inverse Trigonometric functions', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm7', name: 'Matrices and Determinants', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm8', name: 'Continuity, Differentiability & Derivatives', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm10', name: 'Applications of Differentiation', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm11', name: 'Integration I', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm12', name: 'Integration II', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm14', name: 'Differential Equations', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm15', name: 'Vectors', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm16', name: 'Three dimensional geometry', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm17', name: 'Linear Programming', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm18', name: 'Theory of Probability-2', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] }
 ];
 
 // ===== MULTI-USER PROFILE SYSTEM (Dual-mode: Server + localStorage fallback) =====
@@ -595,11 +608,25 @@ function mergeStates(stateA, stateB) {
 
   // Chapters: take maximum solved and merge milestones
   const mergedChapters = [];
-  const allChapterIds = new Set([
+  
+  // Track new default ID list for reference
+  const defaultIds = new Set(DEFAULT_CHAPTERS.map(c => c.id));
+
+  // Determine all candidate chapter IDs
+  const candidateIds = new Set([
     ...(stateA.chapters || []).map(c => c.id),
     ...(stateB.chapters || []).map(c => c.id),
     ...DEFAULT_CHAPTERS.map(c => c.id)
   ]);
+
+  const allChapterIds = [];
+  candidateIds.forEach(id => {
+    // If it's a default chapter, only keep it if it is part of the new DEFAULT_CHAPTERS list.
+    // If it's a custom chapter (starts with ch_), keep it.
+    if (defaultIds.has(id) || id.startsWith('ch_')) {
+      allChapterIds.push(id);
+    }
+  });
 
   allChapterIds.forEach(id => {
     const chA = (stateA.chapters || []).find(c => c.id === id);
@@ -697,8 +724,11 @@ function mergeStates(stateA, stateB) {
   const badgesSet = new Set([...(stateA.badges || []), ...(stateB.badges || [])]);
   const badges = Array.from(badgesSet);
 
-  // Active Chapter ID
-  const activeChapterId = stateA.activeChapterId || stateB.activeChapterId || 'p1';
+  // Active Chapter ID (fallback to first valid chapter if current active one was deleted)
+  let activeChapterId = stateA.activeChapterId || stateB.activeChapterId || 'p1';
+  if (!mergedChapters.some(c => c.id === activeChapterId)) {
+    activeChapterId = mergedChapters[0]?.id || 'p1';
+  }
 
   // Streak & Last Active Date & Daily Goal
   const dailyGoal = Math.max(stateA.dailyGoal || 10, stateB.dailyGoal || 10);
