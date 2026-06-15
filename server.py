@@ -11,45 +11,91 @@ import json
 import os
 import sys
 
-import urllib.request
-import urllib.error
+import pymongo
 
 PORT = int(os.environ.get('PORT', 8080))
 VALID_USERS = ['user1', 'user2']
 
-# Unique private namespace for your study tracker (hardcoded so it stays persistent)
-# Anyone with this ID can read/write, so we make it a long random string.
-DB_NAMESPACE = "qp_tracker_db_df9287ac61e2f3d4"
-KVDB_URL = f"https://kvdb.io/{DB_NAMESPACE}/"
+# Configure MongoDB Connection from Env Variable
+# Fallback to local files if MONGODB_URI is not set (useful for local development)
+MONGODB_URI = os.environ.get('MONGODB_URI')
+mongo_client = None
+db = None
+users_collection = None
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+
+if MONGODB_URI:
+    try:
+        # Connect to MongoDB Atlas
+        mongo_client = pymongo.MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        # Test connection
+        mongo_client.admin.command('ping')
+        db = mongo_client['questpulse']
+        users_collection = db['users']
+        print("🔌 Successfully connected to MongoDB Atlas!")
+    except Exception as e:
+        print(f"❌ Failed to connect to MongoDB Atlas: {e}")
+        print("⚠️  Falling back to local disk storage.")
+        mongo_client = None
+        os.makedirs(DATA_DIR, exist_ok=True)
+else:
+    print("ℹ️  MONGODB_URI environment variable not set. Using local disk storage.")
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+
+def get_local_filepath(user_id):
+    return os.path.join(DATA_DIR, f"{user_id}.json")
+
 
 def read_user_data(user_id):
-    url = f"{KVDB_URL}{user_id}"
-    try:
-        req = urllib.request.Request(url, method='GET')
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status == 200:
-                raw = response.read().decode('utf-8')
-                return json.loads(raw)
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None # User doesn't have data yet
-        print(f"HTTP Error reading {user_id} from cloud DB: {e}")
-    except Exception as e:
-        print(f"Error reading {user_id} from cloud DB: {e}")
-    return None
+    if mongo_client and users_collection is not None:
+        try:
+            # Query MongoDB
+            doc = users_collection.find_one({"_id": user_id})
+            if doc:
+                # Remove MongoDB's internal ID object for JSON serialization
+                doc.pop('_id', None)
+                return doc
+            return None
+        except Exception as e:
+            print(f"Error reading {user_id} from MongoDB: {e}")
+            return None
+    else:
+        # Fallback to local disk
+        filepath = get_local_filepath(user_id)
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error reading local file {filepath}: {e}")
+        return None
+
 
 def write_user_data(user_id, data):
-    url = f"{KVDB_URL}{user_id}"
-    try:
-        body = json.dumps(data).encode('utf-8')
-        req = urllib.request.Request(url, data=body, method='POST')
-        req.add_header('Content-Type', 'application/json')
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status in (200, 201):
-                return True
-    except Exception as e:
-        print(f"Error writing {user_id} to cloud DB: {e}")
-    return False
+    if mongo_client and users_collection is not None:
+        try:
+            # Upsert document in MongoDB (insert if new, update if existing)
+            users_collection.replace_one(
+                {"_id": user_id},
+                data,
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            print(f"Error writing {user_id} to MongoDB: {e}")
+            return False
+    else:
+        # Fallback to local disk
+        filepath = get_local_filepath(user_id)
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            print(f"Error writing local file {filepath}: {e}")
+            return False
 
 
 # MIME types for static file serving
@@ -182,7 +228,10 @@ class QuestPulseHandler(http.server.BaseHTTPRequestHandler):
 def main():
     server = http.server.HTTPServer(('0.0.0.0', PORT), QuestPulseHandler)
     print(f'\n  ✨ QuestPulse Server running at http://localhost:{PORT}\n')
-    print(f'  ☁️  Cloud storage key: {DB_NAMESPACE}')
+    if MONGODB_URI:
+        print(f'  ☁️  Database: MongoDB Atlas (questpulse.users)')
+    else:
+        print(f'  📁 Database: Local Storage fallback ({DATA_DIR}/)')
     print(f'  👤 Supported profiles: {", ".join(VALID_USERS)}\n')
     try:
         server.serve_forever()
