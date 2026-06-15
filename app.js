@@ -59,31 +59,64 @@ const DEFAULT_CHAPTERS = [
   { id: 'm13', name: 'Trigonometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] }
 ];
 
-// ===== MULTI-USER PROFILE SYSTEM (Server-backed) =====
-// Active user key — set after user selection popup
+// ===== MULTI-USER PROFILE SYSTEM (Dual-mode: Server + localStorage fallback) =====
 let currentUser = null; // 'user1' or 'user2'
 let saveDebounceTimer = null;
+let useServerStorage = false; // auto-detected on boot
 
-// Populate user selection popup with preview data from server
-async function populateUserSelectPopup() {
+// Detect if the Python server API is available
+async function detectStorageMode() {
   try {
-    const res = await fetch('/api/users');
-    const summaries = await res.json();
+    const res = await fetch('/api/users', { method: 'GET' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        useServerStorage = true;
+        console.log('📡 Storage mode: Server (shared across browsers)');
+        return;
+      }
+    }
+  } catch (e) {
+    // Server not available
+  }
+  useServerStorage = false;
+  console.log('💾 Storage mode: localStorage (per-browser)');
+}
 
-    ['user1', 'user2'].forEach((userId, idx) => {
-      const nameEl = document.getElementById(`${userId}-name`);
-      const metaEl = document.getElementById(`${userId}-meta`);
-      const info = summaries[userId];
+// Get localStorage key scoped to a user
+function getStorageKey(userId) {
+  return `questpulse_${userId || currentUser}_state`;
+}
 
-      nameEl.textContent = `Profile ${idx + 1}`;
-      if (info && info.hasData) {
-        metaEl.textContent = `${info.totalCount} Qs solved • ${info.streak}d streak • ${info.chaptersCount} chapters`;
+// Populate user selection popup with preview data
+async function populateUserSelectPopup() {
+  for (const [idx, userId] of ['user1', 'user2'].entries()) {
+    const nameEl = document.getElementById(`${userId}-name`);
+    const metaEl = document.getElementById(`${userId}-meta`);
+    nameEl.textContent = `Profile ${idx + 1}`;
+
+    try {
+      let data = null;
+
+      if (useServerStorage) {
+        const res = await fetch(`/api/data/${userId}`);
+        data = await res.json();
+      } else {
+        const saved = localStorage.getItem(getStorageKey(userId));
+        if (saved) data = JSON.parse(saved);
+      }
+
+      if (data && data.totalCount !== undefined) {
+        const total = data.totalCount || 0;
+        const streak = data.streak || 0;
+        const chaptersCount = (data.chapters || []).length;
+        metaEl.textContent = `${total} Qs solved • ${streak}d streak • ${chaptersCount} chapters`;
       } else {
         metaEl.textContent = 'New — no data yet';
       }
-    });
-  } catch (e) {
-    console.error('Failed to fetch user summaries:', e);
+    } catch (e) {
+      metaEl.textContent = 'New — no data yet';
+    }
   }
 }
 
@@ -100,11 +133,11 @@ function hideUserSelectPopup() {
   overlay.classList.remove('open');
 }
 
-// Handle user selection — loads their data from server and boots
+// Handle user selection — loads their data and boots the app
 async function selectUser(userId) {
   currentUser = userId;
   hideUserSelectPopup();
-  await loadFromServer();
+  await loadUserData();
   populateChapterDropdown();
   updateUI();
 }
@@ -499,16 +532,30 @@ function getDateDifferenceInDays(dateStr1, dateStr2) {
   return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 }
 
-// Server-backed Persistence (replaces localStorage)
+// ===== DUAL-MODE PERSISTENCE =====
+// saveToLocalStorage is called throughout the app — it auto-routes to the right storage
 function saveToLocalStorage() {
-  // Debounce saves to avoid spamming the server on rapid clicks
   if (!currentUser) return;
   clearTimeout(saveDebounceTimer);
   saveDebounceTimer = setTimeout(() => {
-    saveToServer();
+    if (useServerStorage) {
+      saveToServer();
+    } else {
+      saveToLocal();
+    }
   }, 300);
 }
 
+// Save to localStorage (per-user key)
+function saveToLocal() {
+  try {
+    localStorage.setItem(getStorageKey(), JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e);
+  }
+}
+
+// Save to server JSON file
 async function saveToServer() {
   if (!currentUser) return;
   try {
@@ -518,53 +565,68 @@ async function saveToServer() {
       body: JSON.stringify(state)
     });
   } catch (e) {
-    console.error('Failed to save to server:', e);
+    console.error('Failed to save to server, falling back to localStorage:', e);
+    saveToLocal(); // fallback
   }
 }
 
-async function loadFromServer() {
+// Load user data (auto-selects server or localStorage)
+async function loadUserData() {
   if (!currentUser) return;
-  try {
-    const res = await fetch(`/api/data/${currentUser}`);
-    const parsed = await res.json();
-    if (parsed) {
-      // Merge with default state structure
-      state = {
-        totalCount: parsed.totalCount || 0,
-        dailyCount: parsed.dailyCount || 0,
-        dailyGoal: parsed.dailyGoal || 10,
-        streak: parsed.streak || 0,
-        lastActiveDate: parsed.lastActiveDate || '',
-        history: parsed.history || [],
-        todayLog: parsed.todayLog || {},
-        badges: parsed.badges || [],
-        chapters: (parsed.chapters && parsed.chapters.length > 0) ? parsed.chapters : [...DEFAULT_CHAPTERS],
-        activeChapterId: parsed.activeChapterId || 'p1',
-        settings: {
-          sound: parsed.settings?.sound ?? true,
-          sparks: parsed.settings?.sparks ?? true,
-          haptics: parsed.settings?.haptics ?? true
-        }
-      };
 
-      // Ensure all chapters have unlockedMilestones array and classYear
-      state.chapters.forEach(c => {
-        if (!c.unlockedMilestones) c.unlockedMilestones = [];
-        if (!c.classYear) {
-          const defaultCh = DEFAULT_CHAPTERS.find(dc => dc.id === c.id);
-          c.classYear = defaultCh ? defaultCh.classYear : 11;
-        }
-      });
+  let parsed = null;
+
+  if (useServerStorage) {
+    try {
+      const res = await fetch(`/api/data/${currentUser}`);
+      parsed = await res.json();
+    } catch (e) {
+      console.error('Server load failed, trying localStorage:', e);
     }
-  } catch (e) {
-    console.error('Error loading from server:', e);
   }
+
+  // Fallback to localStorage if server didn't return data
+  if (!parsed) {
+    const saved = localStorage.getItem(getStorageKey());
+    if (saved) {
+      try { parsed = JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+  }
+
+  if (parsed) {
+    state = {
+      totalCount: parsed.totalCount || 0,
+      dailyCount: parsed.dailyCount || 0,
+      dailyGoal: parsed.dailyGoal || 10,
+      streak: parsed.streak || 0,
+      lastActiveDate: parsed.lastActiveDate || '',
+      history: parsed.history || [],
+      todayLog: parsed.todayLog || {},
+      badges: parsed.badges || [],
+      chapters: (parsed.chapters && parsed.chapters.length > 0) ? parsed.chapters : [...DEFAULT_CHAPTERS],
+      activeChapterId: parsed.activeChapterId || 'p1',
+      settings: {
+        sound: parsed.settings?.sound ?? true,
+        sparks: parsed.settings?.sparks ?? true,
+        haptics: parsed.settings?.haptics ?? true
+      }
+    };
+
+    state.chapters.forEach(c => {
+      if (!c.unlockedMilestones) c.unlockedMilestones = [];
+      if (!c.classYear) {
+        const defaultCh = DEFAULT_CHAPTERS.find(dc => dc.id === c.id);
+        c.classYear = defaultCh ? defaultCh.classYear : 11;
+      }
+    });
+  }
+
   checkNewDay();
 }
 
-// Legacy alias — keep loadFromLocalStorage so no other code breaks
+// Legacy alias
 function loadFromLocalStorage() {
-  // No-op: loading now happens in selectUser via loadFromServer
+  // No-op: loading now happens via loadUserData in selectUser
 }
 
 // Populate Custom Chapter Dropdown filtered by Subject and Class Year (+1/+2)
@@ -1399,5 +1461,8 @@ document.getElementById('switch-user-btn').addEventListener('click', () => {
 });
 
 // ===== INITIAL BOOT =====
-// Show user selection popup on launch (app waits for user to pick a profile)
-showUserSelectPopup();
+// Detect storage mode first, then show user selection
+(async function boot() {
+  await detectStorageMode();
+  showUserSelectPopup();
+})();
