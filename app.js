@@ -1764,89 +1764,92 @@ const EXAM_DATA = [
   {
     id: 'jee-main',
     name: 'JEE Mains',
-    fullName: 'Joint Entrance Examination (Main)',
-    icon: '⚡',
-    color: '#8b5cf6',
+    fullName: 'Joint Entrance Examination (Main) — NTA',
+    abbr: 'JEE',
+    color: '#f97316',
     phases: [
-      { name: 'Session 1', startDate: '2026-01-22', endDate: '2026-01-30', label: 'Jan 22 – 30' },
-      { name: 'Session 2', startDate: '2026-04-01', endDate: '2026-04-15', label: 'Apr 1 – 15' }
-    ]
-  },
-  {
-    id: 'jee-advanced',
-    name: 'JEE Advanced',
-    fullName: 'Joint Entrance Examination (Advanced)',
-    icon: '🔥',
-    color: '#ef4444',
-    phases: [
-      { name: 'Exam Day', startDate: '2026-05-18', endDate: '2026-05-18', label: 'May 18' }
+      { name: 'Session 1', startMonth: 1, startDay: 22, endMonth: 1, endDay: 30 },
+      { name: 'Session 2', startMonth: 4, startDay: 1, endMonth: 4, endDay: 15 }
     ]
   },
   {
     id: 'viteee',
     name: 'VITEEE',
     fullName: 'VIT Engineering Entrance Examination',
-    icon: '🎯',
-    color: '#3b82f6',
+    abbr: 'VIT',
+    color: '#1e40af',
     phases: [
-      { name: 'Exam Window', startDate: '2026-04-18', endDate: '2026-04-28', label: 'Apr 18 – 28' }
+      { name: 'Exam Window', startMonth: 4, startDay: 18, endMonth: 4, endDay: 28 }
     ]
   },
   {
     id: 'bitsat',
     name: 'BITSAT',
-    fullName: 'Birla Institute of Technology & Science Admission Test',
-    icon: '🚀',
-    color: '#f59e0b',
+    fullName: 'BITS Pilani Admission Test',
+    abbr: 'BITS',
+    color: '#dc2626',
     phases: [
-      { name: 'Session 1', startDate: '2026-05-22', endDate: '2026-05-28', label: 'May 22 – 28' },
-      { name: 'Session 2', startDate: '2026-06-20', endDate: '2026-06-26', label: 'Jun 20 – 26' }
+      { name: 'Session 1', startMonth: 5, startDay: 22, endMonth: 5, endDay: 28 },
+      { name: 'Session 2', startMonth: 6, startDay: 20, endMonth: 6, endDay: 26 }
     ]
   },
   {
     id: 'comedk',
     name: 'COMEDK UGET',
-    fullName: 'Consortium of Medical, Engineering & Dental Colleges – Karnataka',
-    icon: '🏛️',
-    color: '#10b981',
+    fullName: 'Consortium of Medical, Engineering & Dental Colleges — Karnataka',
+    abbr: 'CMK',
+    color: '#059669',
     phases: [
-      { name: 'Exam Day', startDate: '2026-05-18', endDate: '2026-05-18', label: 'May 18' }
-    ]
-  },
-  {
-    id: 'kcet',
-    name: 'KCET (RVCE)',
-    fullName: 'Karnataka Common Entrance Test – For RVCE & Karnataka Colleges',
-    icon: '🏫',
-    color: '#ec4899',
-    phases: [
-      { name: 'Day 1 (Bio/Maths)', startDate: '2026-04-16', endDate: '2026-04-16', label: 'Apr 16' },
-      { name: 'Day 2 (Phy/Chem)', startDate: '2026-04-17', endDate: '2026-04-17', label: 'Apr 17' }
+      { name: 'Exam Day', startMonth: 5, startDay: 18, endMonth: 5, endDay: 18 }
     ]
   },
   {
     id: 'keam',
     name: 'KEAM',
-    fullName: 'Kerala Engineering Architecture Medical Entrance Examination',
-    icon: '🌴',
-    color: '#06b6d4',
+    fullName: 'Kerala Engineering Architecture Medical Entrance',
+    abbr: 'KEA',
+    color: '#7c3aed',
     phases: [
-      { name: 'Exam Day', startDate: '2026-06-01', endDate: '2026-06-01', label: 'Jun 1' }
+      { name: 'Paper 1 & 2', startMonth: 6, startDay: 1, endMonth: 6, endDay: 1 }
     ]
   }
 ];
 
-// Track which phase is selected per exam
-const examActivePhase = {};
-EXAM_DATA.forEach(ex => { examActivePhase[ex.id] = 0; });
-
-function getDaysUntil(dateStr) {
+// Compute the next upcoming year for a phase (if it already passed this year, use next year)
+function getPhaseYear(phase) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr + 'T00:00:00');
-  const diff = target.getTime() - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  let year = now.getFullYear();
+  const endDate = new Date(year, phase.endMonth - 1, phase.endDay, 23, 59, 59);
+  if (endDate < now) year++;
+  return year;
 }
+
+function getPhaseStartDateStr(phase) {
+  const y = getPhaseYear(phase);
+  return `${y}-${String(phase.startMonth).padStart(2,'0')}-${String(phase.startDay).padStart(2,'0')}`;
+}
+
+function getPhaseEndDateStr(phase) {
+  const y = getPhaseYear(phase);
+  return `${y}-${String(phase.endMonth).padStart(2,'0')}-${String(phase.endDay).padStart(2,'0')}`;
+}
+
+// Track which phase is selected per exam
+const examActivePhase = {};
+// Auto-select the first upcoming (non-completed) phase for each exam
+EXAM_DATA.forEach(ex => {
+  let selected = 0;
+  for (let i = 0; i < ex.phases.length; i++) {
+    const endStr = getPhaseEndDateStr(ex.phases[i]);
+    if (getDaysUntil(endStr) >= 0) {
+      selected = i;
+      break;
+    }
+    selected = i; // fallback to last phase
+  }
+  examActivePhase[ex.id] = selected;
+});
 
 function formatDateRange(startDate, endDate) {
   const start = new Date(startDate + 'T00:00:00');
@@ -1863,17 +1866,12 @@ function renderExams() {
   const container = document.getElementById('exams-list');
   if (!container) return;
 
-  // Sort: upcoming first (by soonest phase date), completed last
+  // Sort: soonest upcoming first
   const sortedExams = [...EXAM_DATA].sort((a, b) => {
     const aPhase = a.phases[examActivePhase[a.id] || 0];
     const bPhase = b.phases[examActivePhase[b.id] || 0];
-    const aDays = getDaysUntil(aPhase.startDate);
-    const bDays = getDaysUntil(bPhase.startDate);
-    const aCompleted = aDays < 0;
-    const bCompleted = bDays < 0;
-
-    if (aCompleted && !bCompleted) return 1;
-    if (!aCompleted && bCompleted) return -1;
+    const aDays = getDaysUntil(getPhaseStartDateStr(aPhase));
+    const bDays = getDaysUntil(getPhaseStartDateStr(bPhase));
     return aDays - bDays;
   });
 
@@ -1882,8 +1880,10 @@ function renderExams() {
   sortedExams.forEach(exam => {
     const phaseIdx = examActivePhase[exam.id] || 0;
     const phase = exam.phases[phaseIdx];
-    const daysUntilStart = getDaysUntil(phase.startDate);
-    const daysUntilEnd = getDaysUntil(phase.endDate);
+    const startDateStr = getPhaseStartDateStr(phase);
+    const endDateStr = getPhaseEndDateStr(phase);
+    const daysUntilStart = getDaysUntil(startDateStr);
+    const daysUntilEnd = getDaysUntil(endDateStr);
 
     let countdownClass, countdownNum, countdownLabel;
 
@@ -1900,25 +1900,27 @@ function renderExams() {
       countdownNum = '🔴';
       countdownLabel = 'live now';
     } else {
-      countdownClass = 'completed';
-      countdownNum = '✓';
-      countdownLabel = 'completed';
+      // Should rarely happen now since getPhaseYear auto-advances
+      countdownClass = 'upcoming';
+      countdownNum = daysUntilStart + 365;
+      countdownLabel = 'days left';
     }
 
-    const isCompleted = daysUntilEnd < 0;
-    const dateDisplay = formatDateRange(phase.startDate, phase.endDate);
+    const dateDisplay = formatDateRange(startDateStr, endDateStr);
 
     // Phase toggle buttons (only if more than 1 phase)
     let phasesHtml = '';
     if (exam.phases.length > 1) {
       phasesHtml = '<div class="exam-phases">';
       exam.phases.forEach((p, i) => {
-        const pDays = getDaysUntil(p.startDate);
-        const pDone = getDaysUntil(p.endDate) < 0;
+        const pStart = getPhaseStartDateStr(p);
+        const pEnd = getPhaseEndDateStr(p);
+        const pStartDate = new Date(pStart + 'T00:00:00');
+        const shortLabel = `${pStartDate.toLocaleDateString(undefined, {month:'short', day:'numeric'})}`;
         phasesHtml += `
           <button class="exam-phase-btn ${i === phaseIdx ? 'active' : ''}" data-exam="${exam.id}" data-phase="${i}">
-            <span class="phase-name">${p.name} ${pDone ? '✓' : ''}</span>
-            <span class="phase-date">${p.label}</span>
+            <span class="phase-name">${p.name}</span>
+            <span class="phase-date">${shortLabel}, ${getPhaseYear(p)}</span>
           </button>
         `;
       });
@@ -1926,11 +1928,11 @@ function renderExams() {
     }
 
     html += `
-      <div class="exam-card ${isCompleted ? 'is-completed' : ''}" data-exam-id="${exam.id}">
+      <div class="exam-card" data-exam-id="${exam.id}">
         <div class="exam-accent" style="background: ${exam.color};"></div>
         <div class="exam-card-inner">
-          <div class="exam-icon" style="background: ${exam.color}20; color: ${exam.color};">
-            ${exam.icon}
+          <div class="exam-icon exam-logo" style="background: ${exam.color}; color: #fff;">
+            ${exam.abbr}
           </div>
           <div class="exam-info">
             <span class="exam-name">${exam.name}</span>
