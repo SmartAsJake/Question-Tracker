@@ -1815,6 +1815,14 @@ const EXAM_DATA = [
   }
 ];
 
+function getDaysUntil(dateStr) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T00:00:00');
+  const diff = target.getTime() - now.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
 // Compute the next upcoming year for a phase (if it already passed this year, use next year)
 function getPhaseYear(phase) {
   const now = new Date();
