@@ -1846,18 +1846,23 @@ function getPhaseEndDateStr(phase) {
 // Track which phase is selected per exam
 const examActivePhase = {};
 // Auto-select the first upcoming (non-completed) phase for each exam
-EXAM_DATA.forEach(ex => {
-  let selected = 0;
-  for (let i = 0; i < ex.phases.length; i++) {
-    const endStr = getPhaseEndDateStr(ex.phases[i]);
-    if (getDaysUntil(endStr) >= 0) {
-      selected = i;
-      break;
+try {
+  EXAM_DATA.forEach(ex => {
+    let selected = 0;
+    for (let i = 0; i < ex.phases.length; i++) {
+      const endStr = getPhaseEndDateStr(ex.phases[i]);
+      if (getDaysUntil(endStr) >= 0) {
+        selected = i;
+        break;
+      }
+      selected = i; // fallback to last phase
     }
-    selected = i; // fallback to last phase
-  }
-  examActivePhase[ex.id] = selected;
-});
+    examActivePhase[ex.id] = selected;
+  });
+} catch (e) {
+  console.error('Exam phase init error:', e);
+  EXAM_DATA.forEach(ex => { examActivePhase[ex.id] = 0; });
+}
 
 function formatDateRange(startDate, endDate) {
   const start = new Date(startDate + 'T00:00:00');
@@ -1873,6 +1878,8 @@ function formatDateRange(startDate, endDate) {
 function renderExams() {
   const container = document.getElementById('exams-list');
   if (!container) return;
+
+  try {
 
   // Sort: soonest upcoming first
   const sortedExams = [...EXAM_DATA].sort((a, b) => {
@@ -1972,6 +1979,11 @@ function renderExams() {
       playClickSound();
     });
   });
+
+  } catch (err) {
+    console.error('renderExams error:', err);
+    container.innerHTML = `<div style="color:#ef4444;padding:16px;text-align:center;font-size:0.8rem;">Error loading exams: ${err.message}</div>`;
+  }
 }
 
 // ===== USER SELECTION POPUP EVENT HANDLERS =====
