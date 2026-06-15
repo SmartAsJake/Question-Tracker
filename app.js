@@ -1714,6 +1714,11 @@ bottomNavBtns.forEach(btn => {
       renderFullCalendar();
     }
 
+    // Render exams when switching to that tab
+    if (targetTab === 'tab-exams') {
+      renderExams();
+    }
+
     // Scroll to top
     document.querySelector('.app-main').scrollTop = 0;
 
@@ -1753,6 +1758,211 @@ document.getElementById('cal-detail-close').addEventListener('click', () => {
   const grid = document.getElementById('full-cal-grid');
   if (grid) grid.querySelectorAll('.full-cal-day.selected').forEach(el => el.classList.remove('selected'));
 });
+
+// ===== EXAMS TAB LOGIC =====
+const EXAM_DATA = [
+  {
+    id: 'jee-main',
+    name: 'JEE Mains',
+    fullName: 'Joint Entrance Examination (Main)',
+    icon: '⚡',
+    color: '#8b5cf6',
+    phases: [
+      { name: 'Session 1', startDate: '2026-01-22', endDate: '2026-01-30', label: 'Jan 22 – 30' },
+      { name: 'Session 2', startDate: '2026-04-01', endDate: '2026-04-15', label: 'Apr 1 – 15' }
+    ]
+  },
+  {
+    id: 'jee-advanced',
+    name: 'JEE Advanced',
+    fullName: 'Joint Entrance Examination (Advanced)',
+    icon: '🔥',
+    color: '#ef4444',
+    phases: [
+      { name: 'Exam Day', startDate: '2026-05-18', endDate: '2026-05-18', label: 'May 18' }
+    ]
+  },
+  {
+    id: 'viteee',
+    name: 'VITEEE',
+    fullName: 'VIT Engineering Entrance Examination',
+    icon: '🎯',
+    color: '#3b82f6',
+    phases: [
+      { name: 'Exam Window', startDate: '2026-04-18', endDate: '2026-04-28', label: 'Apr 18 – 28' }
+    ]
+  },
+  {
+    id: 'bitsat',
+    name: 'BITSAT',
+    fullName: 'Birla Institute of Technology & Science Admission Test',
+    icon: '🚀',
+    color: '#f59e0b',
+    phases: [
+      { name: 'Session 1', startDate: '2026-05-22', endDate: '2026-05-28', label: 'May 22 – 28' },
+      { name: 'Session 2', startDate: '2026-06-20', endDate: '2026-06-26', label: 'Jun 20 – 26' }
+    ]
+  },
+  {
+    id: 'comedk',
+    name: 'COMEDK UGET',
+    fullName: 'Consortium of Medical, Engineering & Dental Colleges – Karnataka',
+    icon: '🏛️',
+    color: '#10b981',
+    phases: [
+      { name: 'Exam Day', startDate: '2026-05-18', endDate: '2026-05-18', label: 'May 18' }
+    ]
+  },
+  {
+    id: 'kcet',
+    name: 'KCET (RVCE)',
+    fullName: 'Karnataka Common Entrance Test – For RVCE & Karnataka Colleges',
+    icon: '🏫',
+    color: '#ec4899',
+    phases: [
+      { name: 'Day 1 (Bio/Maths)', startDate: '2026-04-16', endDate: '2026-04-16', label: 'Apr 16' },
+      { name: 'Day 2 (Phy/Chem)', startDate: '2026-04-17', endDate: '2026-04-17', label: 'Apr 17' }
+    ]
+  },
+  {
+    id: 'keam',
+    name: 'KEAM',
+    fullName: 'Kerala Engineering Architecture Medical Entrance Examination',
+    icon: '🌴',
+    color: '#06b6d4',
+    phases: [
+      { name: 'Exam Day', startDate: '2026-06-01', endDate: '2026-06-01', label: 'Jun 1' }
+    ]
+  }
+];
+
+// Track which phase is selected per exam
+const examActivePhase = {};
+EXAM_DATA.forEach(ex => { examActivePhase[ex.id] = 0; });
+
+function getDaysUntil(dateStr) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T00:00:00');
+  const diff = target.getTime() - now.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function formatDateRange(startDate, endDate) {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  const opts = { month: 'short', day: 'numeric' };
+
+  if (startDate === endDate) {
+    return start.toLocaleDateString(undefined, { ...opts, year: 'numeric' });
+  }
+  return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, { ...opts, year: 'numeric' })}`;
+}
+
+function renderExams() {
+  const container = document.getElementById('exams-list');
+  if (!container) return;
+
+  // Sort: upcoming first (by soonest phase date), completed last
+  const sortedExams = [...EXAM_DATA].sort((a, b) => {
+    const aPhase = a.phases[examActivePhase[a.id] || 0];
+    const bPhase = b.phases[examActivePhase[b.id] || 0];
+    const aDays = getDaysUntil(aPhase.startDate);
+    const bDays = getDaysUntil(bPhase.startDate);
+    const aCompleted = aDays < 0;
+    const bCompleted = bDays < 0;
+
+    if (aCompleted && !bCompleted) return 1;
+    if (!aCompleted && bCompleted) return -1;
+    return aDays - bDays;
+  });
+
+  let html = '';
+
+  sortedExams.forEach(exam => {
+    const phaseIdx = examActivePhase[exam.id] || 0;
+    const phase = exam.phases[phaseIdx];
+    const daysUntilStart = getDaysUntil(phase.startDate);
+    const daysUntilEnd = getDaysUntil(phase.endDate);
+
+    let countdownClass, countdownNum, countdownLabel;
+
+    if (daysUntilStart > 30) {
+      countdownClass = 'upcoming';
+      countdownNum = daysUntilStart;
+      countdownLabel = 'days left';
+    } else if (daysUntilStart > 0) {
+      countdownClass = 'imminent';
+      countdownNum = daysUntilStart;
+      countdownLabel = daysUntilStart === 1 ? 'day left' : 'days left';
+    } else if (daysUntilEnd >= 0) {
+      countdownClass = 'imminent';
+      countdownNum = '🔴';
+      countdownLabel = 'live now';
+    } else {
+      countdownClass = 'completed';
+      countdownNum = '✓';
+      countdownLabel = 'completed';
+    }
+
+    const isCompleted = daysUntilEnd < 0;
+    const dateDisplay = formatDateRange(phase.startDate, phase.endDate);
+
+    // Phase toggle buttons (only if more than 1 phase)
+    let phasesHtml = '';
+    if (exam.phases.length > 1) {
+      phasesHtml = '<div class="exam-phases">';
+      exam.phases.forEach((p, i) => {
+        const pDays = getDaysUntil(p.startDate);
+        const pDone = getDaysUntil(p.endDate) < 0;
+        phasesHtml += `
+          <button class="exam-phase-btn ${i === phaseIdx ? 'active' : ''}" data-exam="${exam.id}" data-phase="${i}">
+            <span class="phase-name">${p.name} ${pDone ? '✓' : ''}</span>
+            <span class="phase-date">${p.label}</span>
+          </button>
+        `;
+      });
+      phasesHtml += '</div>';
+    }
+
+    html += `
+      <div class="exam-card ${isCompleted ? 'is-completed' : ''}" data-exam-id="${exam.id}">
+        <div class="exam-accent" style="background: ${exam.color};"></div>
+        <div class="exam-card-inner">
+          <div class="exam-icon" style="background: ${exam.color}20; color: ${exam.color};">
+            ${exam.icon}
+          </div>
+          <div class="exam-info">
+            <span class="exam-name">${exam.name}</span>
+            <span class="exam-fullname">${exam.fullName}</span>
+            <span class="exam-dates">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              ${dateDisplay}
+            </span>
+          </div>
+          <div class="exam-countdown ${countdownClass}">
+            <span class="countdown-num">${countdownNum}</span>
+            <span class="countdown-label">${countdownLabel}</span>
+          </div>
+        </div>
+        ${phasesHtml}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Attach phase toggle listeners
+  container.querySelectorAll('.exam-phase-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const examId = btn.getAttribute('data-exam');
+      const phaseIdx = parseInt(btn.getAttribute('data-phase'));
+      examActivePhase[examId] = phaseIdx;
+      renderExams();
+      playClickSound();
+    });
+  });
+}
 
 // ===== USER SELECTION POPUP EVENT HANDLERS =====
 document.getElementById('user-btn-1').addEventListener('click', () => selectUser('user1'));
