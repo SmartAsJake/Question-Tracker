@@ -99,6 +99,8 @@
 
     <!-- Main Content Area -->
     <main class="app-main">
+      <!-- Questions Tab Content -->
+      <div class="tab-content active" id="tab-questions">
       <!-- Chapter Selector Card -->
       <div class="chapter-selector-card">
         <label class="selector-label">Active Study Chapter</label>
@@ -232,12 +234,89 @@
           <!-- History entries injected dynamically -->
         </div>
       </section>
+      </div>
+
+      <!-- Calendar Tab Content -->
+      <div class="tab-content" id="tab-calendar">
+        <!-- Calendar Stats Overview -->
+        <div class="cal-stats-row">
+          <div class="cal-stat-chip">
+            <span class="cal-stat-val" id="cal-stat-thismonth">0</span>
+            <span class="cal-stat-lbl">This Month</span>
+          </div>
+          <div class="cal-stat-chip">
+            <span class="cal-stat-val" id="cal-stat-avg">0</span>
+            <span class="cal-stat-lbl">Daily Avg</span>
+          </div>
+          <div class="cal-stat-chip">
+            <span class="cal-stat-val" id="cal-stat-best">0</span>
+            <span class="cal-stat-lbl">Best Day</span>
+          </div>
+        </div>
+
+        <!-- Full Calendar with Month Navigation -->
+        <div class="full-calendar-card">
+          <div class="full-cal-nav">
+            <button class="full-cal-nav-btn" id="cal-prev-month" aria-label="Previous month">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="full-cal-month-label" id="cal-month-label">June 2026</span>
+            <button class="full-cal-nav-btn" id="cal-next-month" aria-label="Next month">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="full-cal-grid" id="full-cal-grid">
+            <!-- Calendar grid populated by JS -->
+          </div>
+          <div class="full-cal-legend">
+            <div class="legend-item"><span class="legend-dot legend-none"></span> 0 Qs</div>
+            <div class="legend-item"><span class="legend-dot legend-low"></span> 1-5</div>
+            <div class="legend-item"><span class="legend-dot legend-med"></span> 6-15</div>
+            <div class="legend-item"><span class="legend-dot legend-high"></span> 16+</div>
+          </div>
+        </div>
+
+        <!-- Selected Day Detail Card -->
+        <div class="cal-day-detail-card" id="cal-day-detail" style="display:none;">
+          <div class="cal-detail-header">
+            <h3 id="cal-detail-date">June 15, 2026</h3>
+            <button class="close-btn" id="cal-detail-close" aria-label="Close detail">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="cal-detail-total">
+            <span class="cal-detail-big" id="cal-detail-count">0</span>
+            <span class="cal-detail-label">Questions Completed</span>
+          </div>
+          <div class="cal-detail-breakdown" id="cal-detail-breakdown">
+            <!-- Chapter breakdown populated by JS -->
+          </div>
+        </div>
+
+        <!-- Monthly Activity Log -->
+        <div class="cal-activity-section">
+          <h3 class="cal-activity-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Monthly Activity
+          </h3>
+          <div class="cal-activity-bars" id="cal-activity-bars">
+            <!-- Activity bar chart populated by JS -->
+          </div>
+        </div>
+      </div>
     </main>
 
-    <!-- Navigation / Bottom Bar -->
-    <footer class="app-footer">
-      <p class="credit-text">Crafted for Motivation & Focus</p>
-    </footer>
+    <!-- Bottom Tab Navigation Bar -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="bottom-nav-btn active" data-tab="tab-questions" id="nav-btn-questions">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Questions</span>
+      </button>
+      <button class="bottom-nav-btn" data-tab="tab-calendar" id="nav-btn-calendar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendar</span>
+      </button>
+    </nav>
   </div>
 
   <!-- Settings Modal (Glassmorphism Overlay) -->

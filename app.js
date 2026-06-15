@@ -152,6 +152,7 @@ let state = {
   history: [],
   todayLog: {},
   badges: [],
+  dailyHistory: {},  // { 'YYYY-MM-DD': { count: N, chapters: { chId: N, ... } } }
   chapters: [...DEFAULT_CHAPTERS],
   activeChapterId: 'p1',
   settings: {
@@ -605,6 +606,7 @@ async function loadUserData() {
       badges: parsed.badges || [],
       chapters: (parsed.chapters && parsed.chapters.length > 0) ? parsed.chapters : [...DEFAULT_CHAPTERS],
       activeChapterId: parsed.activeChapterId || 'p1',
+      dailyHistory: parsed.dailyHistory || {},
       settings: {
         sound: parsed.settings?.sound ?? true,
         sparks: parsed.settings?.sparks ?? true,
@@ -1054,6 +1056,18 @@ function handleIncrement(e) {
   if (!state.todayLog) state.todayLog = {};
   state.todayLog[state.activeChapterId] = (state.todayLog[state.activeChapterId] || 0) + 1;
 
+  // Update dailyHistory for permanent per-day tracking
+  const todayKey = getTodayString();
+  if (!state.dailyHistory) state.dailyHistory = {};
+  if (!state.dailyHistory[todayKey]) {
+    state.dailyHistory[todayKey] = { count: 0, chapters: {} };
+  }
+  state.dailyHistory[todayKey].count++;
+  if (!state.dailyHistory[todayKey].chapters[state.activeChapterId]) {
+    state.dailyHistory[todayKey].chapters[state.activeChapterId] = 0;
+  }
+  state.dailyHistory[todayKey].chapters[state.activeChapterId]++;
+
   // If user reaches daily goal for the first time today
   if (state.dailyCount === state.dailyGoal) {
     state.streak++;
@@ -1095,6 +1109,15 @@ function handleDecrement(e) {
   // Update today's calendar log
   if (state.todayLog && state.todayLog[state.activeChapterId] > 0) {
     state.todayLog[state.activeChapterId]--;
+  }
+
+  // Update dailyHistory for permanent per-day tracking
+  const todayKey = getTodayString();
+  if (state.dailyHistory && state.dailyHistory[todayKey]) {
+    state.dailyHistory[todayKey].count = Math.max(0, state.dailyHistory[todayKey].count - 1);
+    if (state.dailyHistory[todayKey].chapters && state.dailyHistory[todayKey].chapters[state.activeChapterId] > 0) {
+      state.dailyHistory[todayKey].chapters[state.activeChapterId]--;
+    }
   }
 
   // Play bubble pop click sound
@@ -1321,6 +1344,7 @@ resetDataBtn.addEventListener('click', () => {
       lastActiveDate: getTodayString(),
       history: [],
       badges: [],
+      dailyHistory: {},
       chapters: DEFAULT_CHAPTERS.map(ch => ({
         ...ch,
         solved: 0,
@@ -1449,6 +1473,285 @@ editChapterForm.addEventListener('submit', (e) => {
 // Edit Chapter Cancel
 editChapterCancelBtn.addEventListener('click', () => {
   editChapterSection.style.display = 'none';
+});
+
+// ===== CALENDAR TAB LOGIC =====
+let calViewYear = new Date().getFullYear();
+let calViewMonth = new Date().getMonth();
+let calSelectedDate = null;
+
+// Build activity map from dailyHistory + current session todayLog
+function getActivityMap() {
+  const map = {};
+
+  // Pull from dailyHistory (permanent)
+  if (state.dailyHistory) {
+    Object.keys(state.dailyHistory).forEach(dateKey => {
+      map[dateKey] = {
+        count: state.dailyHistory[dateKey].count || 0,
+        chapters: state.dailyHistory[dateKey].chapters || {}
+      };
+    });
+  }
+
+  // Also pull from legacy history array
+  if (state.history) {
+    state.history.forEach(h => {
+      if (!map[h.date]) {
+        map[h.date] = { count: h.count || 0, chapters: h.chapters || {} };
+      }
+    });
+  }
+
+  // Today's live session (overrides stored if higher)
+  const todayStr = getTodayString();
+  const todayData = { count: state.dailyCount || 0, chapters: state.todayLog || {} };
+  if (!map[todayStr] || todayData.count > (map[todayStr].count || 0)) {
+    map[todayStr] = todayData;
+  }
+
+  return map;
+}
+
+function renderFullCalendar() {
+  const grid = document.getElementById('full-cal-grid');
+  const monthLabel = document.getElementById('cal-month-label');
+  if (!grid || !monthLabel) return;
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  monthLabel.textContent = `${monthNames[calViewMonth]} ${calViewYear}`;
+
+  const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  const todayStr = getTodayString();
+  const activityMap = getActivityMap();
+
+  let html = '';
+
+  // Day headers
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  dayNames.forEach(d => {
+    html += `<div class="full-cal-day-header">${d}</div>`;
+  });
+
+  // Empty cells
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="full-cal-day empty"></div>`;
+  }
+
+  // Month stats
+  let monthTotal = 0;
+  let bestDay = 0;
+  let activeDays = 0;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dStr = `${calViewYear}-${String(calViewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const activity = activityMap[dStr];
+    const count = activity ? activity.count : 0;
+
+    monthTotal += count;
+    if (count > 0) activeDays++;
+    if (count > bestDay) bestDay = count;
+
+    let level = 'level-0';
+    if (count >= 16) level = 'level-3';
+    else if (count >= 6) level = 'level-2';
+    else if (count >= 1) level = 'level-1';
+
+    const isToday = dStr === todayStr;
+    const isSelected = dStr === calSelectedDate;
+
+    html += `
+      <div class="full-cal-day ${level} ${isToday ? 'is-today' : ''} ${isSelected ? 'selected' : ''}" data-date="${dStr}">
+        <span class="fc-date">${d}</span>
+        <span class="fc-count">${count > 0 ? count : ''}</span>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+
+  // Update stats chips
+  const statMonth = document.getElementById('cal-stat-thismonth');
+  const statAvg = document.getElementById('cal-stat-avg');
+  const statBest = document.getElementById('cal-stat-best');
+  if (statMonth) statMonth.textContent = monthTotal;
+  if (statAvg) statAvg.textContent = activeDays > 0 ? Math.round(monthTotal / activeDays) : 0;
+  if (statBest) statBest.textContent = bestDay;
+
+  // Render activity bars for this month
+  renderActivityBars(activityMap, daysInMonth);
+
+  // Attach click listeners
+  grid.querySelectorAll('.full-cal-day:not(.empty)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const dateStr = cell.getAttribute('data-date');
+      calSelectedDate = dateStr;
+
+      // Remove previous selection
+      grid.querySelectorAll('.full-cal-day.selected').forEach(el => el.classList.remove('selected'));
+      cell.classList.add('selected');
+
+      showCalDayDetail(dateStr, activityMap);
+    });
+  });
+}
+
+function showCalDayDetail(dateStr, activityMap) {
+  const detailCard = document.getElementById('cal-day-detail');
+  const detailDate = document.getElementById('cal-detail-date');
+  const detailCount = document.getElementById('cal-detail-count');
+  const detailBreakdown = document.getElementById('cal-detail-breakdown');
+  if (!detailCard) return;
+
+  const activity = activityMap[dateStr];
+  const count = activity ? activity.count : 0;
+
+  // Format date nicely
+  const dateObj = new Date(dateStr + 'T00:00:00');
+  const formatted = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  detailDate.textContent = formatted;
+  detailCount.textContent = count;
+
+  detailBreakdown.innerHTML = '';
+
+  if (count <= 0) {
+    detailBreakdown.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.8rem; padding:12px; font-style:italic;">No questions solved on this day</div>';
+  } else if (activity && activity.chapters && Object.keys(activity.chapters).length > 0) {
+    Object.keys(activity.chapters).forEach(chId => {
+      const cnt = activity.chapters[chId];
+      if (cnt <= 0) return;
+      const chap = state.chapters.find(c => c.id === chId);
+      const name = chap ? chap.name : 'Unknown Chapter';
+
+      detailBreakdown.innerHTML += `
+        <div class="cal-breakdown-item">
+          <span class="cal-breakdown-name">${name}</span>
+          <span class="cal-breakdown-count">${cnt} Qs</span>
+        </div>
+      `;
+    });
+  } else {
+    detailBreakdown.innerHTML = `
+      <div class="cal-breakdown-item">
+        <span class="cal-breakdown-name">General Practice</span>
+        <span class="cal-breakdown-count">${count} Qs</span>
+      </div>
+    `;
+  }
+
+  detailCard.style.display = 'block';
+}
+
+function renderActivityBars(activityMap, daysInMonth) {
+  const container = document.getElementById('cal-activity-bars');
+  if (!container) return;
+
+  // Find max count for scaling
+  let maxCount = 1;
+  const entries = [];
+
+  for (let d = daysInMonth; d >= 1 && entries.length < 14; d--) {
+    const dStr = `${calViewYear}-${String(calViewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const todayStr = getTodayString();
+    // Only show days up to today
+    if (dStr > todayStr) continue;
+    const activity = activityMap[dStr];
+    const count = activity ? activity.count : 0;
+    if (count > maxCount) maxCount = count;
+    entries.push({ date: dStr, count, day: d });
+  }
+
+  entries.reverse();
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:0.75rem; padding:12px; font-style:italic;">No activity data for this month yet</div>';
+    return;
+  }
+
+  let html = '';
+  entries.forEach(entry => {
+    const dateObj = new Date(entry.date + 'T00:00:00');
+    const label = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const pct = Math.round((entry.count / maxCount) * 100);
+    const goalMet = entry.count >= state.dailyGoal;
+
+    html += `
+      <div class="activity-bar-row">
+        <span class="activity-bar-date">${label}</span>
+        <div class="activity-bar-track">
+          <div class="activity-bar-fill ${goalMet ? 'goal-met' : ''}" style="width: ${pct}%"></div>
+        </div>
+        <span class="activity-bar-count">${entry.count}</span>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// ===== BOTTOM NAV TAB SWITCHING =====
+const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+bottomNavBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetTab = btn.getAttribute('data-tab');
+
+    // Switch active button
+    bottomNavBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Switch active tab content
+    tabContents.forEach(tc => tc.classList.remove('active'));
+    const target = document.getElementById(targetTab);
+    if (target) {
+      target.classList.add('active');
+    }
+
+    // Render calendar when switching to that tab
+    if (targetTab === 'tab-calendar') {
+      renderFullCalendar();
+    }
+
+    // Scroll to top
+    document.querySelector('.app-main').scrollTop = 0;
+
+    playClickSound();
+  });
+});
+
+// Calendar month navigation
+document.getElementById('cal-prev-month').addEventListener('click', () => {
+  calViewMonth--;
+  if (calViewMonth < 0) {
+    calViewMonth = 11;
+    calViewYear--;
+  }
+  calSelectedDate = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderFullCalendar();
+  playClickSound();
+});
+
+document.getElementById('cal-next-month').addEventListener('click', () => {
+  calViewMonth++;
+  if (calViewMonth > 11) {
+    calViewMonth = 0;
+    calViewYear++;
+  }
+  calSelectedDate = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderFullCalendar();
+  playClickSound();
+});
+
+// Close detail card
+document.getElementById('cal-detail-close').addEventListener('click', () => {
+  document.getElementById('cal-day-detail').style.display = 'none';
+  calSelectedDate = null;
+  const grid = document.getElementById('full-cal-grid');
+  if (grid) grid.querySelectorAll('.full-cal-day.selected').forEach(el => el.classList.remove('selected'));
 });
 
 // ===== USER SELECTION POPUP EVENT HANDLERS =====
