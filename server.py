@@ -11,38 +11,45 @@ import json
 import os
 import sys
 
+import urllib.request
+import urllib.error
+
 PORT = int(os.environ.get('PORT', 8080))
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 VALID_USERS = ['user1', 'user2']
 
-# Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
-
-
-def get_user_file(user_id):
-    return os.path.join(DATA_DIR, f'{user_id}.json')
-
+# Unique private namespace for your study tracker (hardcoded so it stays persistent)
+# Anyone with this ID can read/write, so we make it a long random string.
+DB_NAMESPACE = "qp_tracker_db_df9287ac61e2f3d4"
+KVDB_URL = f"https://kvdb.io/{DB_NAMESPACE}/"
 
 def read_user_data(user_id):
-    filepath = get_user_file(user_id)
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f'Error reading {filepath}: {e}')
+    url = f"{KVDB_URL}{user_id}"
+    try:
+        req = urllib.request.Request(url, method='GET')
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                raw = response.read().decode('utf-8')
+                return json.loads(raw)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None # User doesn't have data yet
+        print(f"HTTP Error reading {user_id} from cloud DB: {e}")
+    except Exception as e:
+        print(f"Error reading {user_id} from cloud DB: {e}")
     return None
 
-
 def write_user_data(user_id, data):
-    filepath = get_user_file(user_id)
+    url = f"{KVDB_URL}{user_id}"
     try:
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        return True
+        body = json.dumps(data).encode('utf-8')
+        req = urllib.request.Request(url, data=body, method='POST')
+        req.add_header('Content-Type', 'application/json')
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status in (200, 201):
+                return True
     except Exception as e:
-        print(f'Error writing {filepath}: {e}')
-        return False
+        print(f"Error writing {user_id} to cloud DB: {e}")
+    return False
 
 
 # MIME types for static file serving
@@ -175,7 +182,7 @@ class QuestPulseHandler(http.server.BaseHTTPRequestHandler):
 def main():
     server = http.server.HTTPServer(('0.0.0.0', PORT), QuestPulseHandler)
     print(f'\n  ✨ QuestPulse Server running at http://localhost:{PORT}\n')
-    print(f'  📁 User data stored in: {DATA_DIR}/')
+    print(f'  ☁️  Cloud storage key: {DB_NAMESPACE}')
     print(f'  👤 Supported profiles: {", ".join(VALID_USERS)}\n')
     try:
         server.serve_forever()
