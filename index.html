@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuestPulse Study Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <!-- Google Fonts for premium typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Mobile Capable Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0f19">
+</head>
+<body>
+  <!-- User Selection Popup -->
+  <div class="user-select-overlay" id="user-select-overlay">
+    <div class="user-select-card">
+      <div class="user-select-glow"></div>
+      <div class="user-select-header">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#userGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <defs>
+            <linearGradient id="userGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#60a5fa"/>
+            </linearGradient>
+          </defs>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <h2 class="user-select-title">Welcome to QuestPulse</h2>
+        <p class="user-select-subtitle">Select your profile to continue</p>
+      </div>
+      <div class="user-select-options">
+        <button class="user-select-btn" id="user-btn-1" data-user="user1">
+          <div class="user-avatar" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="user-btn-info">
+            <span class="user-btn-name" id="user1-name">User 1</span>
+            <span class="user-btn-meta" id="user1-meta">No data yet</span>
+          </div>
+          <svg class="user-btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="user-select-btn" id="user-btn-2" data-user="user2">
+          <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="user-btn-info">
+            <span class="user-btn-name" id="user2-name">User 2</span>
+            <span class="user-btn-meta" id="user2-meta">No data yet</span>
+          </div>
+          <svg class="user-btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <p class="user-select-footer">Each profile stores progress independently</p>
+    </div>
+  </div>
+
+  <!-- Canvas for particle animations -->
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          QuestPulse
+        </span>
+      </div>
+      <div class="header-right">
+        <!-- Streak Flame -->
+        <div class="streak-badge" id="streak-badge" title="Daily Streak">
+          <svg class="flame-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+          </svg>
+          <span id="streak-count">0</span>d
+        </div>
+        <!-- Switch User -->
+        <button class="icon-btn" id="switch-user-btn" aria-label="Switch User" title="Switch User">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </button>
+        <!-- Settings Trigger -->
+        <button class="icon-btn" id="settings-trigger" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Chapter Selector Card -->
+      <div class="chapter-selector-card">
+        <label class="selector-label">Active Study Chapter</label>
+        <div class="selector-row">
+          <div class="custom-dropdown-container" id="chapter-dropdown">
+            <div class="custom-dropdown-selected" id="chapter-dropdown-selected">
+              <div class="selected-chapter-info">
+                <span class="selected-name" id="selected-chapter-name">Select a chapter</span>
+                <span class="selected-meta" id="selected-chapter-meta">0 / 250 Qs</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="custom-dropdown-list" id="chapter-dropdown-list">
+              <div class="dropdown-class-select" id="dropdown-class-select">
+                <button class="dropdown-class-btn active" data-class="11">+1 (Class 11)</button>
+                <button class="dropdown-class-btn" data-class="12">+2 (Class 12)</button>
+              </div>
+              <div class="dropdown-tabs" id="dropdown-tabs">
+                <button class="dropdown-tab-btn active" data-subject="Physics">Physics</button>
+                <button class="dropdown-tab-btn" data-subject="Chemistry">Chemistry</button>
+                <button class="dropdown-tab-btn" data-subject="Mathematics">Maths</button>
+              </div>
+              <div class="dropdown-options-container" id="dropdown-options-container">
+                <!-- Dynamically populated rich options -->
+              </div>
+            </div>
+          </div>
+          <button class="icon-btn" id="manage-chapters-btn" title="Manage Chapters" aria-label="Manage Chapters">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <section class="progress-section">
+        <div class="progress-circle-container">
+          <svg class="progress-ring" width="220" height="220">
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" /> <!-- purple-500 -->
+                <stop offset="50%" stop-color="#3b82f6" /> <!-- blue-500 -->
+                <stop offset="100%" stop-color="#10b981" /> <!-- emerald-500 -->
+              </linearGradient>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <circle class="progress-ring-bg" cx="110" cy="110" r="95"></circle>
+            <circle class="progress-ring-bar" id="progress-bar" cx="110" cy="110" r="95" stroke="url(#progressGradient)"></circle>
+          </svg>
+          <!-- Text inside Progress Circle -->
+          <div class="progress-text-container">
+            <span class="progress-label" id="progress-chapter-subject">PHYSICS</span>
+            <span class="progress-count" id="chapter-solved-count">0</span>
+            <span class="progress-goal" id="chapter-goal-label">Goal: 250</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- The Pulse Incrementor Button -->
+      <section class="action-section">
+        <div class="button-wrapper">
+          <button class="pulse-btn" id="pulse-btn" aria-label="Increment Completed Question">
+            <span class="btn-ripple"></span>
+            <span class="btn-ripple"></span>
+            <div class="btn-inner">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+          </button>
+          <button class="decrement-btn" id="decrement-btn" title="Accidental click? Deduct a question" aria-label="Decrement Completed Question">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <span class="btn-hint">Tap to complete a question</span>
+        </div>
+      </section>
+
+      <!-- Fast Stats / Quick view -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Total Solved</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-today">0/10</span>
+          <span class="stat-label">Today's Target</span>
+        </div>
+      </section>
+
+      <!-- Chapter Mastery Milestones -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Chapter Mastery Milestones
+        </h2>
+        <div class="mastery-milestones-container" id="mastery-container">
+          <!-- Dynamically generated chapter milestones -->
+        </div>
+      </section>
+
+      <!-- Global Achievements -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+          Global Achievements
+        </h2>
+        <div class="badges-container" id="badges-container">
+          <!-- Badges dynamically generated in app.js -->
+        </div>
+      </section>
+
+      <!-- Calendar Section -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Study Calendar
+        </h2>
+        <div class="calendar-container" id="calendar-container">
+          <!-- Calendar generated dynamically -->
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+          Activity Log
+        </h2>
+        <div class="history-list" id="history-list">
+          <div class="history-empty" id="history-empty">No activity completed yet. Get clicking!</div>
+          <!-- History entries injected dynamically -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Navigation / Bottom Bar -->
+    <footer class="app-footer">
+      <p class="credit-text">Crafted for Motivation & Focus</p>
+    </footer>
+  </div>
+
+  <!-- Settings Modal (Glassmorphism Overlay) -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="close-btn" id="settings-close" aria-label="Close settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Daily Target</span>
+            <span class="setting-desc">Set your daily questions goal</span>
+          </div>
+          <div class="goal-picker">
+            <button class="goal-adjust-btn" id="goal-dec">-</button>
+            <span class="goal-value" id="goal-val">10</span>
+            <button class="goal-adjust-btn" id="goal-inc">+</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Satisfying Sounds</span>
+            <span class="setting-desc">Play bubble-pops and chimes</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sound" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Visual Sparks</span>
+            <span class="setting-desc">Particle explosion on click</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sparks" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Tactile Vibration</span>
+            <span class="setting-desc">Simulate device haptics / flash</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-haptics" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="danger-zone">
+          <h4>Danger Zone</h4>
+          <p>This will permanently clear all daily progress, streaks, badges, and history logs.</p>
+          <button class="btn btn-danger" id="reset-data-btn">Reset All Progress Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Day Details Modal -->
+  <div class="modal-overlay" id="calendar-day-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="calendar-modal-title">Activity Details</h3>
+        <button class="close-btn" id="calendar-modal-close" aria-label="Close details">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="calendar-details-summary">
+          <div class="calendar-total-qs" id="calendar-modal-total">0 Qs</div>
+          <div class="calendar-total-label">Total Completed</div>
+        </div>
+        <div class="calendar-details-list" id="calendar-modal-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Chapters Modal -->
+  <div class="modal-overlay" id="manage-chapters-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Manage Chapters</h3>
+        <button class="close-btn" id="manage-chapters-close" aria-label="Close chapter management">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Add Chapter Form -->
+        <div class="manage-section-card">
+          <h4 class="sub-title">Add New Chapter</h4>
+          <form id="add-chapter-form" class="chapter-form">
+            <div class="form-group">
+              <label for="new-chapter-name">Chapter Name</label>
+              <input type="text" id="new-chapter-name" placeholder="e.g. Fluid Mechanics" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="new-chapter-subject">Subject</label>
+                <select id="new-chapter-subject">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Mathematics">Mathematics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="new-chapter-class">Class</label>
+                <select id="new-chapter-class">
+                  <option value="11">+1 Topics</option>
+                  <option value="12">+2 Topics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="new-chapter-goal">Question Goal</label>
+                <input type="number" id="new-chapter-goal" value="250" min="1" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Chapter</button>
+          </form>
+        </div>
+
+        <!-- Edit Chapter Form (Hidden by default, shown when editing) -->
+        <div id="edit-chapter-section" class="manage-section-card" style="display: none;">
+          <h4 class="sub-title" style="color: var(--secondary);">Edit Chapter</h4>
+          <form id="edit-chapter-form" class="chapter-form">
+            <input type="hidden" id="edit-chapter-id">
+            <div class="form-group">
+              <label for="edit-chapter-name">Chapter Name</label>
+              <input type="text" id="edit-chapter-name" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-chapter-subject">Subject</label>
+                <select id="edit-chapter-subject">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Mathematics">Mathematics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-chapter-class">Class</label>
+                <select id="edit-chapter-class">
+                  <option value="11">+1 Topics</option>
+                  <option value="12">+2 Topics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-chapter-goal">Question Goal</label>
+                <input type="number" id="edit-chapter-goal" min="1" required>
+              </div>
+            </div>
+            <div class="form-actions-row">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" id="edit-chapter-cancel" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Chapters List by Subject -->
+        <div class="manage-section-card">
+          <h4 class="sub-title">Chapters List</h4>
+          <div class="subject-filter-tabs">
+            <button class="tab-btn active" data-subject="All">All</button>
+            <button class="tab-btn" data-subject="Physics">Physics</button>
+            <button class="tab-btn" data-subject="Chemistry">Chemistry</button>
+            <button class="tab-btn" data-subject="Mathematics">Mathematics</button>
+          </div>
+          <div class="chapters-list-container" id="manage-chapters-list">
+            <!-- Dynamically populated chapters with edit/delete buttons -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast / Notification -->
+  <div class="toast-notification" id="toast">
+    <div class="toast-icon">✨</div>
+    <div class="toast-message" id="toast-msg">Awesome job! Keep going!</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

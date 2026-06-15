@@ -1,0 +1,490 @@
+{
+  "totalCount": 4,
+  "dailyCount": 4,
+  "dailyGoal": 10,
+  "streak": 0,
+  "lastActiveDate": "2026-06-15",
+  "history": [],
+  "todayLog": {
+    "p1": 4
+  },
+  "badges": [
+    "first_click"
+  ],
+  "chapters": [
+    {
+      "id": "p1",
+      "name": "Physics and Measurement",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 4,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p2",
+      "name": "Kinematics",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p3",
+      "name": "Laws of Motion",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p4",
+      "name": "Work, Energy and Power",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p5",
+      "name": "Rotational Motion",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p6",
+      "name": "Gravitation",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p7",
+      "name": "Properties of Solids and Liquids",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p8",
+      "name": "Thermodynamics",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p9",
+      "name": "Kinetic Theory of Gases",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p10",
+      "name": "Oscillations and Waves",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p11",
+      "name": "Electrostatics",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p12",
+      "name": "Current Electricity",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p13",
+      "name": "Magnetic Effects of Current and Magnetism",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p14",
+      "name": "Electromagnetic Induction and AC",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p15",
+      "name": "Electromagnetic Waves",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p16",
+      "name": "Optics",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p17",
+      "name": "Dual Nature of Matter and Radiation",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p18",
+      "name": "Atoms and Nuclei",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p19",
+      "name": "Electronic Devices",
+      "subject": "Physics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "p20",
+      "name": "Experimental Skills",
+      "subject": "Physics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c1",
+      "name": "Some Basic Concepts in Chemistry",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c2",
+      "name": "Atomic Structure",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c3",
+      "name": "Chemical Bonding & Molecular Structure",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c4",
+      "name": "Chemical Thermodynamics",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c5",
+      "name": "Solutions",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c6",
+      "name": "Equilibrium",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c7",
+      "name": "Redox Reactions & Electrochemistry",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c8",
+      "name": "Chemical Kinetics",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c9",
+      "name": "Classification of Elements & Periodicity",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c10",
+      "name": "p-Block Elements",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c11",
+      "name": "d- and f-Block Elements",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c12",
+      "name": "Coordination Compounds",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c13",
+      "name": "Organic Chemistry Principles & Techniques",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c14",
+      "name": "Hydrocarbons",
+      "subject": "Chemistry",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c15",
+      "name": "Organic Compounds Containing Halogens",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c16",
+      "name": "Organic Compounds Containing Oxygen",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c17",
+      "name": "Organic Compounds Containing Nitrogen",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c18",
+      "name": "Biomolecules",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "c19",
+      "name": "Principles Related to Practical Chemistry",
+      "subject": "Chemistry",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m1",
+      "name": "Sets, Relations and Functions",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m2",
+      "name": "Complex Numbers & Quadratic Equations",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m3",
+      "name": "Matrices and Determinants",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m4",
+      "name": "Permutations and Combinations",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m5",
+      "name": "Sequences and Series",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m6",
+      "name": "Limits, Continuity & Differentiability",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m7",
+      "name": "Integral Calculus",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m8",
+      "name": "Differential Equations",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m9",
+      "name": "Coordinate Geometry",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m10",
+      "name": "Three Dimensional Geometry",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m11",
+      "name": "Vector Algebra",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m12",
+      "name": "Statistics and Probability",
+      "subject": "Mathematics",
+      "classYear": 12,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    },
+    {
+      "id": "m13",
+      "name": "Trigonometry",
+      "subject": "Mathematics",
+      "classYear": 11,
+      "solved": 0,
+      "goal": 250,
+      "unlockedMilestones": []
+    }
+  ],
+  "activeChapterId": "p1",
+  "settings": {
+    "sound": true,
+    "sparks": true,
+    "haptics": true
+  }
+}

@@ -1,0 +1,3465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuestPulse Study Tracker</title>
+  <style>/* Base Design System Variables */
+:root {
+  --bg-dark: #090d16;
+  --bg-app: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.6);
+  --bg-card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --primary: #8b5cf6;       /* Violet */
+  --primary-glow: rgba(139, 92, 246, 0.5);
+  --secondary: #3b82f6;     /* Blue */
+  --secondary-glow: rgba(59, 130, 246, 0.4);
+  --accent: #10b981;        /* Emerald Green */
+  --accent-glow: rgba(16, 185, 129, 0.5);
+  --accent-orange: #ff6b35; /* Orange for flame */
+  --accent-orange-glow: rgba(255, 107, 53, 0.5);
+  --danger: #ef4444;        /* Coral Red */
+  
+  --font-display: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.25);
+  
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-circle: 50%;
+  
+  --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-elastic: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Base Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: -webkit-fill-available; /* Mobile height fix */
+  overflow: hidden;
+  position: relative;
+}
+
+html {
+  height: -webkit-fill-available;
+}
+
+/* Background canvas setup */
+#particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 99;
+}
+
+/* Phone Container Frame on Desktop, Fluid on Mobile */
+.app-container {
+  width: 100%;
+  height: 100vh;
+  max-width: 450px;
+  background-color: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 10;
+  transition: var(--transition-smooth);
+}
+
+@media (min-width: 480px) {
+  .app-container {
+    height: 850px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* Header */
+.app-header {
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8));
+  border-bottom: 1px solid var(--bg-card-border);
+  z-index: 20;
+}
+
+.app-logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  stroke: url(#logoGradient) #a78bfa;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Streak Indicator */
+.streak-badge {
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: var(--accent-orange);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 15px rgba(255, 107, 53, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.streak-badge.active {
+  animation: streak-pulse 1.8s infinite alternate;
+}
+
+.streak-badge.active .flame-icon {
+  animation: flame-flicker 0.6s infinite alternate;
+}
+
+.flame-icon {
+  width: 16px;
+  height: 16px;
+  fill: var(--accent-orange);
+  filter: drop-shadow(0 0 4px var(--accent-orange-glow));
+}
+
+/* Header Buttons */
+.icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--bg-card-border);
+  color: var(--text-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-circle);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* App Main Body */
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  /* Hide scrollbars for layout fluidity */
+  scrollbar-width: none;
+}
+
+.app-main::-webkit-scrollbar {
+  display: none;
+}
+
+/* Progress Ring Section */
+.progress-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.progress-circle-container {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.15));
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 14px;
+}
+
+.progress-ring-bar {
+  fill: none;
+  stroke-width: 14px;
+  stroke-linecap: round;
+  stroke-dasharray: 596.9; /* 2 * PI * r (95) = 596.902 */
+  stroke-dashoffset: 596.9;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+.progress-text-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.progress-count {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 4px 0;
+  background: linear-gradient(to bottom, #ffffff 60%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.progress-goal {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Action Incrementor Section */
+.action-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+/* Pulse Button styling */
+.pulse-btn {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-circle);
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 
+     0 10px 30px rgba(139, 92, 246, 0.35),
+     0 4px 10px rgba(59, 130, 246, 0.25),
+     inset 0 2px 4px rgba(255, 255, 255, 0.3),
+     inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+  outline: none;
+  z-index: 10;
+  transition: transform 0.1s cubic-bezier(0.1, 0.8, 0.2, 1), box-shadow 0.2s;
+}
+
+.decrement-btn {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-circle);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.decrement-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.decrement-btn:active {
+  transform: scale(0.95);
+}
+
+.pulse-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: var(--radius-circle);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  opacity: 0.15;
+  z-index: -1;
+  transition: var(--transition-smooth);
+}
+
+/* Continuous breathing ring animation for idle button */
+.pulse-btn:hover::before {
+  opacity: 0.3;
+  transform: scale(1.05);
+}
+
+.btn-inner {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-circle);
+  background: rgba(9, 13, 22, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-primary);
+  box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.05);
+  transition: var(--transition-smooth);
+}
+
+.plus-icon {
+  filter: drop-shadow(0 0 5px var(--primary-glow));
+  transition: var(--transition-elastic);
+  stroke: #ffffff;
+}
+
+/* active pressing animation */
+.pulse-btn:active {
+  transform: scale(0.88);
+  box-shadow: 
+    0 4px 10px rgba(139, 92, 246, 0.2),
+    inset 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.pulse-btn:active .plus-icon {
+  transform: rotate(90deg) scale(0.85);
+}
+
+.pulse-btn.bounce {
+  animation: elastic-rebound 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.4);
+}
+
+/* Ripple waves on button */
+.btn-ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--primary);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pulse-btn.click-trigger .btn-ripple:nth-child(1) {
+  animation: ripple-spread 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.pulse-btn.click-trigger .btn-ripple:nth-child(2) {
+  animation: ripple-spread-delayed 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) 0.1s forwards;
+}
+
+.btn-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  animation: text-breath 2.5s infinite ease-in-out;
+}
+
+/* Floating count text "+1" on click */
+.floating-plus {
+  position: absolute;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.8rem;
+  pointer-events: none;
+  z-index: 100;
+  animation: float-up 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Quick Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  backdrop-filter: blur(12px);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition-smooth);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.4);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Common Section Styles */
+.app-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.9;
+}
+
+.section-title svg {
+  color: var(--primary);
+}
+
+/* Badges / Milestones Grid */
+.badges-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.badge-item {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+  transition: var(--transition-elastic);
+  cursor: pointer;
+}
+
+.badge-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-circle);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.badge-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+/* Active unlocked badge style */
+.badge-item.unlocked {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+}
+
+.badge-item.unlocked .badge-icon-wrapper {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+.badge-item.unlocked .badge-name {
+  color: var(--text-primary);
+}
+
+.badge-item.unlocked:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+}
+
+/* Calendar UI */
+.calendar-container {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-day-header {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-sm);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.calendar-day.empty {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.calendar-day.today {
+  border-color: var(--primary);
+}
+
+.calendar-date {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  align-self: flex-start;
+}
+
+.calendar-score {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-top: 4px;
+}
+
+.calendar-day.has-activity {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.calendar-day.has-activity .calendar-score {
+  color: var(--primary-glow);
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+/* Calendar Modal details */
+.calendar-details-summary {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calendar-total-qs {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.calendar-total-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.calendar-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.calendar-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+
+.cal-detail-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cal-detail-score {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+/* History Log List */
+.history-list {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.history-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px 0;
+  font-style: italic;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--secondary);
+  animation: slide-in 0.3s ease-out;
+}
+
+.history-item.goal-completed {
+  border-left-color: var(--accent);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.history-date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.history-count-badge {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.history-item.goal-completed .history-count-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--accent);
+}
+
+/* Footer Credits */
+.app-footer {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--bg-card-border);
+  background: rgba(15, 23, 42, 0.95);
+  z-index: 10;
+}
+
+.credit-text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Custom Modal Settings Dialog */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(9, 13, 22, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-content {
+  background: #0f172a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-height: 85%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.05);
+}
+
+.modal-overlay.open .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-circle);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: var(--transition-smooth);
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 20px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bg-card-border);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.setting-desc {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Adjust button for goal number configuration */
+.goal-picker {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.goal-adjust-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  transition: var(--transition-smooth);
+}
+
+.goal-adjust-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.goal-adjust-btn:active {
+  transform: scale(0.9);
+}
+
+.goal-value {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  width: 32px;
+  text-align: center;
+}
+
+/* Switch styling */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .3s;
+  border-radius: 24px;
+  border: 1px solid var(--bg-card-border);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-secondary);
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Settings Reset Option */
+.danger-zone {
+  margin-top: 15px;
+  border-top: 1px dashed rgba(239, 68, 68, 0.2);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.danger-zone h4 {
+  font-size: 0.85rem;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.danger-zone p {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.btn {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: translateY(1px);
+}
+
+/* Toast Notifications */
+.toast-notification {
+  position: absolute;
+  top: 25px;
+  left: 50%;
+  transform: translate(-50%, -100px);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(139, 92, 246, 0.2);
+  border-radius: 40px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+  pointer-events: none;
+  width: max-content;
+  max-width: 80%;
+  backdrop-filter: blur(10px);
+}
+
+.toast-notification.show {
+  transform: translate(-50%, 0);
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+}
+
+.toast-message {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Haptic Screen Flash simulation */
+.haptic-flash {
+  animation: flash-frame 0.15s ease-out;
+}
+
+/* Haptic Screen Shake simulation */
+.haptic-shake {
+  animation: shake-frame 0.18s linear;
+}
+
+/* Animations declarations */
+@keyframes text-breath {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.02); }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.6) rotate(-10deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0px) scale(1.2) rotate(5deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-50px) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8) rotate(-5deg);
+  }
+}
+
+@keyframes ripple-spread {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes ripple-spread-delayed {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes elastic-rebound {
+  0% { transform: scale(0.88); }
+  35% { transform: scale(1.06); }
+  65% { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes streak-pulse {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.35);
+    border-color: rgba(255, 107, 53, 0.55);
+  }
+}
+
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  25% { transform: scale(1.08) rotate(-3deg); filter: brightness(1.1); }
+  50% { transform: scale(0.95) rotate(2deg); filter: brightness(0.95); }
+  75% { transform: scale(1.05) rotate(-1deg); filter: brightness(1.15); }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-in {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes flash-frame {
+  0% { filter: brightness(1.4) contrast(1.1); }
+  100% { filter: brightness(1) contrast(1); }
+}
+
+@keyframes shake-frame {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-3px, -2px); }
+  30% { transform: translate(3px, 1px); }
+  45% { transform: translate(-2px, 2px); }
+  60% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, 1px); }
+  85% { transform: translate(1px, -1px); }
+}
+
+/* Chapter Selector and management styles */
+.chapter-selector-card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  backdrop-filter: blur(12px);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 200;
+}
+
+.selector-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.selector-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown-container {
+  flex: 1;
+  position: relative;
+  user-select: none;
+}
+
+.custom-dropdown-selected {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.custom-dropdown-selected:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(15, 23, 42, 0.8);
+}
+
+.custom-dropdown-container.open .custom-dropdown-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.custom-dropdown-container.open .custom-dropdown-selected .dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.selected-chapter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selected-name {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.selected-meta {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dropdown-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.custom-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #0f172a;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--bg-card-border);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.custom-dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-dropdown-list::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 3px;
+}
+
+.custom-dropdown-container.open .custom-dropdown-list {
+  display: block;
+  animation: slide-down 0.2s ease-out;
+}
+
+.dropdown-optgroup {
+  padding: 8px 12px 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.dropdown-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-option.active {
+  background: rgba(139, 92, 246, 0.15);
+  border-left: 3px solid var(--primary);
+}
+
+.dropdown-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown-option-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.dropdown-option-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dropdown-option-progress-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dropdown-option-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 2px;
+}
+
+/* Dropdown Class Select Header */
+.dropdown-class-select {
+  display: flex;
+  background: #0f172a;
+  padding: 8px 8px 4px;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.dropdown-class-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  padding: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-smooth);
+}
+
+.dropdown-class-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.dropdown-class-btn.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  border: 1px solid transparent;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Dropdown Tabs */
+.dropdown-tabs {
+  display: flex;
+  background: #0f172a;
+  padding: 4px 8px 8px;
+  gap: 4px;
+  position: sticky;
+  top: 39px;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-tab-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 6px 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-smooth);
+}
+
+.dropdown-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.dropdown-tab-btn.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.dropdown-options-container {
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mastery milestones styles */
+.mastery-milestones-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mastery-milestone-card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  backdrop-filter: blur(12px);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.mastery-milestone-card.locked {
+  opacity: 0.65;
+}
+
+.mastery-milestone-card.unlocked {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(16, 185, 129, 0.04) 100%);
+}
+
+.milestone-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-circle);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: var(--transition-elastic);
+}
+
+.mastery-milestone-card.unlocked .milestone-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  color: white;
+}
+
+.milestone-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.milestone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.milestone-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.milestone-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mastery-milestone-card.unlocked .milestone-name {
+  color: #10b981;
+}
+
+.milestone-progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.milestone-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.5s ease-out;
+}
+
+.mastery-milestone-card.unlocked .milestone-progress-fill {
+  background: linear-gradient(to right, #10b981, #34d399);
+}
+
+/* Manage chapters modal components */
+.manage-section-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.chapter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.form-group label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input, .form-group select {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 10px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-actions-row .btn {
+  flex: 1;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px var(--primary-glow);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--bg-card-border);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.subject-filter-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--bg-card-border);
+  padding-bottom: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subject-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: var(--transition-smooth);
+  white-space: nowrap;
+}
+
+.tab-btn.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.chapters-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.manage-chapter-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--bg-card-border);
+}
+
+.manage-chapter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.manage-chapter-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.manage-chapter-meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.manage-chapter-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+}
+
+.action-icon-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.action-icon-btn.delete:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+</style>
+  <!-- Manifest removed for local file -->
+  <!-- Google Fonts for premium typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Mobile Capable Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0f19">
+</head>
+<body>
+  <!-- Canvas for particle animations -->
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-icon"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          QuestPulse
+        </span>
+      </div>
+      <div class="header-right">
+        <!-- Streak Flame -->
+        <div class="streak-badge" id="streak-badge" title="Daily Streak">
+          <svg class="flame-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+          </svg>
+          <span id="streak-count">0</span>d
+        </div>
+        <!-- Settings Trigger -->
+        <button class="icon-btn" id="settings-trigger" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Chapter Selector Card -->
+      <div class="chapter-selector-card">
+        <label class="selector-label">Active Study Chapter</label>
+        <div class="selector-row">
+          <div class="custom-dropdown-container" id="chapter-dropdown">
+            <div class="custom-dropdown-selected" id="chapter-dropdown-selected">
+              <div class="selected-chapter-info">
+                <span class="selected-name" id="selected-chapter-name">Select a chapter</span>
+                <span class="selected-meta" id="selected-chapter-meta">0 / 250 Qs</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="custom-dropdown-list" id="chapter-dropdown-list">
+              <div class="dropdown-class-select" id="dropdown-class-select">
+                <button class="dropdown-class-btn active" data-class="11">+1 (Class 11)</button>
+                <button class="dropdown-class-btn" data-class="12">+2 (Class 12)</button>
+              </div>
+              <div class="dropdown-tabs" id="dropdown-tabs">
+                <button class="dropdown-tab-btn active" data-subject="Physics">Physics</button>
+                <button class="dropdown-tab-btn" data-subject="Chemistry">Chemistry</button>
+                <button class="dropdown-tab-btn" data-subject="Mathematics">Maths</button>
+              </div>
+              <div class="dropdown-options-container" id="dropdown-options-container">
+                <!-- Dynamically populated rich options -->
+              </div>
+            </div>
+          </div>
+          <button class="icon-btn" id="manage-chapters-btn" title="Manage Chapters" aria-label="Manage Chapters">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <section class="progress-section">
+        <div class="progress-circle-container">
+          <svg class="progress-ring" width="220" height="220">
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" /> <!-- purple-500 -->
+                <stop offset="50%" stop-color="#3b82f6" /> <!-- blue-500 -->
+                <stop offset="100%" stop-color="#10b981" /> <!-- emerald-500 -->
+              </linearGradient>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <circle class="progress-ring-bg" cx="110" cy="110" r="95"></circle>
+            <circle class="progress-ring-bar" id="progress-bar" cx="110" cy="110" r="95" stroke="url(#progressGradient)"></circle>
+          </svg>
+          <!-- Text inside Progress Circle -->
+          <div class="progress-text-container">
+            <span class="progress-label" id="progress-chapter-subject">PHYSICS</span>
+            <span class="progress-count" id="chapter-solved-count">0</span>
+            <span class="progress-goal" id="chapter-goal-label">Goal: 250</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- The Pulse Incrementor Button -->
+      <section class="action-section">
+        <div class="button-wrapper">
+          <button class="pulse-btn" id="pulse-btn" aria-label="Increment Completed Question">
+            <span class="btn-ripple"></span>
+            <span class="btn-ripple"></span>
+            <div class="btn-inner">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+          </button>
+          <button class="decrement-btn" id="decrement-btn" title="Accidental click? Deduct a question" aria-label="Decrement Completed Question">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <span class="btn-hint">Tap to complete a question</span>
+        </div>
+      </section>
+
+      <!-- Fast Stats / Quick view -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Total Solved</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-today">0/10</span>
+          <span class="stat-label">Today's Target</span>
+        </div>
+      </section>
+
+      <!-- Chapter Mastery Milestones -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Chapter Mastery Milestones
+        </h2>
+        <div class="mastery-milestones-container" id="mastery-container">
+          <!-- Dynamically generated chapter milestones -->
+        </div>
+      </section>
+
+      <!-- Global Achievements -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+          Global Achievements
+        </h2>
+        <div class="badges-container" id="badges-container">
+          <!-- Badges dynamically generated in app.js -->
+        </div>
+      </section>
+
+      <!-- Calendar Section -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Study Calendar
+        </h2>
+        <div class="calendar-container" id="calendar-container">
+          <!-- Calendar generated dynamically -->
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="app-section">
+        <h2 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+          Activity Log
+        </h2>
+        <div class="history-list" id="history-list">
+          <div class="history-empty" id="history-empty">No activity completed yet. Get clicking!</div>
+          <!-- History entries injected dynamically -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Navigation / Bottom Bar -->
+    <footer class="app-footer">
+      <p class="credit-text">Crafted for Motivation & Focus</p>
+    </footer>
+  </div>
+
+  <!-- Settings Modal (Glassmorphism Overlay) -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="close-btn" id="settings-close" aria-label="Close settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Daily Target</span>
+            <span class="setting-desc">Set your daily questions goal</span>
+          </div>
+          <div class="goal-picker">
+            <button class="goal-adjust-btn" id="goal-dec">-</button>
+            <span class="goal-value" id="goal-val">10</span>
+            <button class="goal-adjust-btn" id="goal-inc">+</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Satisfying Sounds</span>
+            <span class="setting-desc">Play bubble-pops and chimes</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sound" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Visual Sparks</span>
+            <span class="setting-desc">Particle explosion on click</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sparks" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-name">Tactile Vibration</span>
+            <span class="setting-desc">Simulate device haptics / flash</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-haptics" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="danger-zone">
+          <h4>Danger Zone</h4>
+          <p>This will permanently clear all daily progress, streaks, badges, and history logs.</p>
+          <button class="btn btn-danger" id="reset-data-btn">Reset All Progress Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Day Details Modal -->
+  <div class="modal-overlay" id="calendar-day-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="calendar-modal-title">Activity Details</h3>
+        <button class="close-btn" id="calendar-modal-close" aria-label="Close details">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="calendar-details-summary">
+          <div class="calendar-total-qs" id="calendar-modal-total">0 Qs</div>
+          <div class="calendar-total-label">Total Completed</div>
+        </div>
+        <div class="calendar-details-list" id="calendar-modal-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Chapters Modal -->
+  <div class="modal-overlay" id="manage-chapters-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Manage Chapters</h3>
+        <button class="close-btn" id="manage-chapters-close" aria-label="Close chapter management">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Add Chapter Form -->
+        <div class="manage-section-card">
+          <h4 class="sub-title">Add New Chapter</h4>
+          <form id="add-chapter-form" class="chapter-form">
+            <div class="form-group">
+              <label for="new-chapter-name">Chapter Name</label>
+              <input type="text" id="new-chapter-name" placeholder="e.g. Fluid Mechanics" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="new-chapter-subject">Subject</label>
+                <select id="new-chapter-subject">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Mathematics">Mathematics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="new-chapter-class">Class</label>
+                <select id="new-chapter-class">
+                  <option value="11">+1 Topics</option>
+                  <option value="12">+2 Topics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="new-chapter-goal">Question Goal</label>
+                <input type="number" id="new-chapter-goal" value="250" min="1" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Chapter</button>
+          </form>
+        </div>
+
+        <!-- Edit Chapter Form (Hidden by default, shown when editing) -->
+        <div id="edit-chapter-section" class="manage-section-card" style="display: none;">
+          <h4 class="sub-title" style="color: var(--secondary);">Edit Chapter</h4>
+          <form id="edit-chapter-form" class="chapter-form">
+            <input type="hidden" id="edit-chapter-id">
+            <div class="form-group">
+              <label for="edit-chapter-name">Chapter Name</label>
+              <input type="text" id="edit-chapter-name" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-chapter-subject">Subject</label>
+                <select id="edit-chapter-subject">
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Mathematics">Mathematics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-chapter-class">Class</label>
+                <select id="edit-chapter-class">
+                  <option value="11">+1 Topics</option>
+                  <option value="12">+2 Topics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-chapter-goal">Question Goal</label>
+                <input type="number" id="edit-chapter-goal" min="1" required>
+              </div>
+            </div>
+            <div class="form-actions-row">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" id="edit-chapter-cancel" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Chapters List by Subject -->
+        <div class="manage-section-card">
+          <h4 class="sub-title">Chapters List</h4>
+          <div class="subject-filter-tabs">
+            <button class="tab-btn active" data-subject="All">All</button>
+            <button class="tab-btn" data-subject="Physics">Physics</button>
+            <button class="tab-btn" data-subject="Chemistry">Chemistry</button>
+            <button class="tab-btn" data-subject="Mathematics">Mathematics</button>
+          </div>
+          <div class="chapters-list-container" id="manage-chapters-list">
+            <!-- Dynamically populated chapters with edit/delete buttons -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast / Notification -->
+  <div class="toast-notification" id="toast">
+    <div class="toast-icon">✨</div>
+    <div class="toast-message" id="toast-msg">Awesome job! Keep going!</div>
+  </div>
+
+  <script>// Default chapters list for JEE Main syllabus
+const DEFAULT_CHAPTERS = [
+  // Physics
+  { id: 'p1', name: 'Physics and Measurement', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p2', name: 'Kinematics', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p3', name: 'Laws of Motion', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p4', name: 'Work, Energy and Power', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p5', name: 'Rotational Motion', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p6', name: 'Gravitation', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p7', name: 'Properties of Solids and Liquids', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p8', name: 'Thermodynamics', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p9', name: 'Kinetic Theory of Gases', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p10', name: 'Oscillations and Waves', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p11', name: 'Electrostatics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p12', name: 'Current Electricity', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p13', name: 'Magnetic Effects of Current and Magnetism', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p14', name: 'Electromagnetic Induction and AC', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p15', name: 'Electromagnetic Waves', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p16', name: 'Optics', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p17', name: 'Dual Nature of Matter and Radiation', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p18', name: 'Atoms and Nuclei', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p19', name: 'Electronic Devices', subject: 'Physics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'p20', name: 'Experimental Skills', subject: 'Physics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+
+  // Chemistry
+  { id: 'c1', name: 'Some Basic Concepts in Chemistry', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c2', name: 'Atomic Structure', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c3', name: 'Chemical Bonding & Molecular Structure', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c4', name: 'Chemical Thermodynamics', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c5', name: 'Solutions', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c6', name: 'Equilibrium', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c7', name: 'Redox Reactions & Electrochemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c8', name: 'Chemical Kinetics', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c9', name: 'Classification of Elements & Periodicity', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c10', name: 'p-Block Elements', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c11', name: 'd- and f-Block Elements', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c12', name: 'Coordination Compounds', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c13', name: 'Organic Chemistry Principles & Techniques', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c14', name: 'Hydrocarbons', subject: 'Chemistry', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c15', name: 'Organic Compounds Containing Halogens', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c16', name: 'Organic Compounds Containing Oxygen', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c17', name: 'Organic Compounds Containing Nitrogen', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c18', name: 'Biomolecules', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'c19', name: 'Principles Related to Practical Chemistry', subject: 'Chemistry', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+
+  // Mathematics
+  { id: 'm1', name: 'Sets, Relations and Functions', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm2', name: 'Complex Numbers & Quadratic Equations', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm3', name: 'Matrices and Determinants', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm4', name: 'Permutations and Combinations', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm5', name: 'Sequences and Series', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm6', name: 'Limits, Continuity & Differentiability', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm7', name: 'Integral Calculus', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm8', name: 'Differential Equations', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm9', name: 'Coordinate Geometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm10', name: 'Three Dimensional Geometry', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm11', name: 'Vector Algebra', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm12', name: 'Statistics and Probability', subject: 'Mathematics', classYear: 12, solved: 0, goal: 250, unlockedMilestones: [] },
+  { id: 'm13', name: 'Trigonometry', subject: 'Mathematics', classYear: 11, solved: 0, goal: 250, unlockedMilestones: [] }
+];
+
+// State initialization
+let state = {
+  totalCount: 0,
+  dailyCount: 0,
+  dailyGoal: 10,
+  streak: 0,
+  lastActiveDate: '',
+  history: [],
+  todayLog: {},
+  badges: [],
+  chapters: [...DEFAULT_CHAPTERS],
+  activeChapterId: 'p1',
+  settings: {
+    sound: true,
+    sparks: true,
+    haptics: true
+  }
+};
+
+// Web Audio API context placeholder
+let audioCtx = null;
+
+// Global Achievements configuration
+const MILESTONES = [
+  { id: 'first_click', name: 'First Spark', desc: 'Complete your first question', icon: '⚡', target: 1, type: 'total' },
+  { id: 'bronze_solver', name: 'Bronze Solver', desc: 'Complete 10 questions total', icon: '🥉', target: 10, type: 'total' },
+  { id: 'silver_solver', name: 'Silver Solver', desc: 'Complete 50 questions total', icon: '🥈', target: 50, type: 'total' },
+  { id: 'gold_solver', name: 'Gold Solver', desc: 'Complete 150 questions total', icon: '🥇', target: 150, type: 'total' },
+  { id: 'daily_five', name: 'High Five', desc: 'Complete 5 questions in one day', icon: '✋', target: 5, type: 'daily' },
+  { id: 'daily_goal', name: 'Goal Crusher', desc: 'Reach your daily goal', icon: '🎯', target: 1, type: 'goal_met' },
+  { id: 'streak_three', name: 'Fire Starter', desc: 'Maintain a 3-day streak', icon: '🌱', target: 3, type: 'streak' },
+  { id: 'streak_seven', name: 'Unstoppable', desc: 'Maintain a 7-day streak', icon: '🔥', target: 7, type: 'streak' }
+];
+
+// Mastery Milestones definitions for chapters (percentage of the goal)
+const MASTERY_MILESTONE_DEFINITIONS = [
+  { key: 'm10', name: 'Initiate (10%)', desc: 'First steps into the chapter', icon: '💡', pct: 0.1 },
+  { key: 'm25', name: 'Challenger (25%)', desc: 'Building conceptual confidence', icon: '📈', pct: 0.25 },
+  { key: 'm50', name: 'Advanced (50%)', desc: 'Halfway to deep understanding', icon: '🚀', pct: 0.5 },
+  { key: 'm80', name: 'Elite (80%)', desc: 'Mastering the tough variations', icon: '🏆', pct: 0.8 },
+  { key: 'm100', name: 'Master (100%)', desc: 'Full curriculum mastery achieved', icon: '👑', pct: 1.0 }
+];
+
+// Elements selection
+const pulseBtn = document.getElementById('pulse-btn');
+const decrementBtn = document.getElementById('decrement-btn');
+const streakCountEl = document.getElementById('streak-count');
+const streakBadgeEl = document.getElementById('streak-badge');
+const progressBarEl = document.getElementById('progress-bar');
+const historyList = document.getElementById('history-list');
+const historyEmpty = document.getElementById('history-empty');
+const calendarContainer = document.getElementById('calendar-container');
+const calendarDayModal = document.getElementById('calendar-day-modal');
+const calendarModalClose = document.getElementById('calendar-modal-close');
+const calendarModalTitle = document.getElementById('calendar-modal-title');
+const calendarModalTotal = document.getElementById('calendar-modal-total');
+const calendarModalList = document.getElementById('calendar-modal-list');
+const masteryContainer = document.getElementById('mastery-container');
+const chapterDropdown = document.getElementById('chapter-dropdown');
+const chapterDropdownSelected = document.getElementById('chapter-dropdown-selected');
+const chapterDropdownList = document.getElementById('chapter-dropdown-list');
+const selectedChapterNameEl = document.getElementById('selected-chapter-name');
+const selectedChapterMetaEl = document.getElementById('selected-chapter-meta');
+const dropdownOptionsContainer = document.getElementById('dropdown-options-container');
+const dropdownTabBtns = document.querySelectorAll('#dropdown-tabs .dropdown-tab-btn');
+const dropdownClassBtns = document.querySelectorAll('#dropdown-class-select .dropdown-class-btn');
+const newChapterClassSelect = document.getElementById('new-chapter-class');
+const editChapterClassSelect = document.getElementById('edit-chapter-class');
+let activeDropdownSubject = 'Physics';
+let activeDropdownClass = '11';
+
+// Settings Elements
+const settingsTrigger = document.getElementById('settings-trigger');
+const settingsClose = document.getElementById('settings-close');
+const settingsModal = document.getElementById('settings-modal');
+const goalValEl = document.getElementById('goal-val');
+const goalDecBtn = document.getElementById('goal-dec');
+const goalIncBtn = document.getElementById('goal-inc');
+const toggleSound = document.getElementById('toggle-sound');
+const toggleSparks = document.getElementById('toggle-sparks');
+const toggleHaptics = document.getElementById('toggle-haptics');
+const resetDataBtn = document.getElementById('reset-data-btn');
+
+// Manage Chapters Elements
+const manageChaptersBtn = document.getElementById('manage-chapters-btn');
+const manageChaptersClose = document.getElementById('manage-chapters-close');
+const manageChaptersModal = document.getElementById('manage-chapters-modal');
+const addChapterForm = document.getElementById('add-chapter-form');
+const newChapterNameInput = document.getElementById('new-chapter-name');
+const newChapterSubjectSelect = document.getElementById('new-chapter-subject');
+const newChapterGoalInput = document.getElementById('new-chapter-goal');
+const editChapterSection = document.getElementById('edit-chapter-section');
+const editChapterForm = document.getElementById('edit-chapter-form');
+const editChapterIdInput = document.getElementById('edit-chapter-id');
+const editChapterNameInput = document.getElementById('edit-chapter-name');
+const editChapterSubjectSelect = document.getElementById('edit-chapter-subject');
+const editChapterGoalInput = document.getElementById('edit-chapter-goal');
+const editChapterCancelBtn = document.getElementById('edit-chapter-cancel');
+const manageChaptersList = document.getElementById('manage-chapters-list');
+const filterTabBtns = document.querySelectorAll('.subject-filter-tabs .tab-btn');
+
+let activeSubjectFilter = 'All';
+
+// Canvas Setup
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Initialize Audio Context on user click
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+// SYNTHESIZER: Satisfying audio feedback triggers using Web Audio API
+function playClickSound() {
+  if (!state.settings.sound) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+
+  // Primary juicy bubble-pop sound
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  osc.type = 'sine';
+  // Fast frequency slide upwards makes it sound positive and clicky
+  osc.frequency.setValueAtTime(160, now);
+  osc.frequency.exponentialRampToValueAtTime(750, now + 0.06);
+  
+  // Fast decay envelope
+  gainNode.gain.setValueAtTime(0.001, now);
+  gainNode.gain.linearRampToValueAtTime(0.35, now + 0.008);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  
+  osc.start(now);
+  osc.stop(now + 0.1);
+
+  // Secondary high-frequency transient click for extra tactile detail
+  const clickOsc = audioCtx.createOscillator();
+  const clickGain = audioCtx.createGain();
+  clickOsc.connect(clickGain);
+  clickGain.connect(audioCtx.destination);
+  
+  clickOsc.type = 'triangle';
+  clickOsc.frequency.setValueAtTime(1400, now);
+  
+  clickGain.gain.setValueAtTime(0.001, now);
+  clickGain.gain.linearRampToValueAtTime(0.08, now + 0.002);
+  clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+  
+  clickOsc.start(now);
+  clickOsc.stop(now + 0.02);
+}
+
+function playGoalSound() {
+  if (!state.settings.sound) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+  
+  // Play an uplifting, dreamy major chord arpeggio (C major 7th / 9th vibe)
+  const notes = [
+    261.63, // C4
+    329.63, // E4
+    392.00, // G4
+    523.25, // C5
+    659.25, // E5
+    783.99  // G5
+  ];
+  
+  notes.forEach((freq, index) => {
+    const timeOffset = index * 0.09;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now + timeOffset);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, now + timeOffset);
+    filter.frequency.exponentialRampToValueAtTime(300, now + timeOffset + 0.5);
+    
+    gainNode.gain.setValueAtTime(0.001, now + timeOffset);
+    gainNode.gain.linearRampToValueAtTime(0.25, now + timeOffset + 0.03);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 0.6);
+    
+    osc.start(now + timeOffset);
+    osc.stop(now + timeOffset + 0.7);
+  });
+}
+
+function playBadgeSound() {
+  if (!state.settings.sound) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+  
+  // Quick double chime (E5 -> A5)
+  const chord = [587.33, 880.00]; // D5 -> A5
+  chord.forEach((freq, idx) => {
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
+    
+    gainNode.gain.setValueAtTime(0.001, now + (idx * 0.08));
+    gainNode.gain.linearRampToValueAtTime(0.2, now + (idx * 0.08) + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.08) + 0.8);
+    
+    osc.start(now + (idx * 0.08));
+    osc.stop(now + (idx * 0.08) + 0.9);
+  });
+}
+
+// PHYSICS PARTICLE SYSTEM (Canvas Confetti / Sparks)
+class Particle {
+  constructor(x, y, isBigBurst = false) {
+    this.x = x;
+    this.y = y;
+    this.isBigBurst = isBigBurst;
+    
+    const angle = Math.random() * Math.PI * 2;
+    const speed = isBigBurst 
+      ? (Math.random() * 8 + 3) // Faster burst for goals
+      : (Math.random() * 5 + 1.5); // Standard click explosion
+      
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed - (isBigBurst ? 3 : 1); // Upward bias
+    
+    this.radius = Math.random() * 4 + 2;
+    if (isBigBurst && Math.random() > 0.6) {
+      this.radius += Math.random() * 4;
+    }
+    
+    // Aesthetic color theme (pinks, purples, golds, emeralds, cyans)
+    const colors = [
+      '#a78bfa', // violet
+      '#60a5fa', // blue
+      '#34d399', // emerald
+      '#f59e0b', // gold
+      '#ec4899', // pink
+      '#22d3ee'  // cyan
+    ];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    
+    this.alpha = 1;
+    this.decay = Math.random() * 0.015 + (isBigBurst ? 0.008 : 0.018);
+    this.gravity = 0.12;
+    this.drag = 0.96;
+    
+    this.shape = Math.random() > 0.4 ? 'circle' : 'rect';
+    this.rotation = Math.random() * Math.PI;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+  }
+
+  update() {
+    this.vx *= this.drag;
+    this.vy *= this.drag;
+    this.vy += this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.rotation += this.rotationSpeed;
+    this.alpha -= this.decay;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+    ctx.fillStyle = this.color;
+    
+    // Add glow effect to big celebrations
+    if (this.isBigBurst) {
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = this.color;
+    }
+    
+    if (this.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 1.5);
+    }
+    ctx.restore();
+  }
+}
+
+function spawnParticles(x, y, isBigBurst = false) {
+  if (!state.settings.sparks) return;
+  const count = isBigBurst ? 120 : 18;
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle(x, y, isBigBurst));
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update();
+    p.draw();
+    if (p.alpha <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+requestAnimationFrame(animateParticles);
+
+// Date Validation: Checking for Streak & Resetting daily stats
+function checkNewDay() {
+  const todayStr = getTodayString();
+  
+  if (state.lastActiveDate !== todayStr) {
+    if (state.lastActiveDate !== '') {
+      // Check if they met yesterday's goal
+      const yesterdayGoalMet = state.dailyCount >= state.dailyGoal;
+      
+      // Store yesterday's work in history
+      const historyEntry = {
+        date: state.lastActiveDate,
+        count: state.dailyCount,
+        goalCompleted: yesterdayGoalMet,
+        chapters: state.todayLog || {}
+      };
+      
+      // Keep only last 30 entries in history
+      state.history.unshift(historyEntry);
+      if (state.history.length > 30) {
+        state.history.pop();
+      }
+      
+      // Reset todayLog for the new day
+      state.todayLog = {};
+      
+      // Check if streak survives:
+      const dateDiff = getDateDifferenceInDays(state.lastActiveDate, todayStr);
+      if (dateDiff === 1 && yesterdayGoalMet) {
+        // Streak stays active
+      } else {
+        // Streak is broken
+        state.streak = 0;
+        showToast('🔥 Streak broken! Start fresh today!', 'ℹ️');
+      }
+    }
+    
+    // Reset daily counters
+    state.dailyCount = 0;
+    state.lastActiveDate = todayStr;
+    saveToLocalStorage();
+  }
+}
+
+function getTodayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getDateDifferenceInDays(dateStr1, dateStr2) {
+  const d1 = new Date(dateStr1 + 'T00:00:00');
+  const d2 = new Date(dateStr2 + 'T00:00:00');
+  const timeDiff = Math.abs(d2.getTime() - d1.getTime());
+  return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+}
+
+// LocalStorage Persistence
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('questpulse_tracker_state', JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save to local storage:', e);
+  }
+}
+
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem('questpulse_tracker_state');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      // Merge with default state structure
+      state = {
+        ...state,
+        ...parsed,
+        settings: { ...state.settings, ...(parsed.settings || {}) },
+        chapters: (parsed.chapters && parsed.chapters.length > 0) ? parsed.chapters : [...DEFAULT_CHAPTERS]
+      };
+      
+      // Ensure all chapters have unlockedMilestones array and classYear properties
+      state.chapters.forEach(c => {
+        if (!c.unlockedMilestones) {
+          c.unlockedMilestones = [];
+        }
+        if (!c.classYear) {
+          const defaultCh = DEFAULT_CHAPTERS.find(dc => dc.id === c.id);
+          c.classYear = defaultCh ? defaultCh.classYear : 11;
+        }
+      });
+    } catch (e) {
+      console.error('Error parsing local storage data', e);
+    }
+  }
+  checkNewDay();
+}
+
+// Populate Custom Chapter Dropdown filtered by Subject and Class Year (+1/+2)
+function populateChapterDropdown() {
+  if (!dropdownOptionsContainer) return;
+  const currentSelectedId = state.activeChapterId;
+  const currentCh = state.chapters.find(c => c.id === currentSelectedId);
+  
+  // Update selected display
+  if (currentCh && selectedChapterNameEl && selectedChapterMetaEl) {
+    selectedChapterNameEl.textContent = currentCh.name;
+    selectedChapterMetaEl.textContent = `${currentCh.solved} / ${currentCh.goal} Qs`;
+  }
+  
+  dropdownOptionsContainer.innerHTML = '';
+  
+  // Filter chapters by active subject and class (+1/+2)
+  const filteredChapters = state.chapters.filter(ch => 
+    ch.subject === activeDropdownSubject && 
+    (ch.classYear === parseInt(activeDropdownClass) || !ch.classYear)
+  );
+  
+  filteredChapters.forEach(ch => {
+    const progressPct = Math.min(100, Math.round((ch.solved / ch.goal) * 100));
+    const opt = document.createElement('div');
+    opt.className = `dropdown-option ${ch.id === currentSelectedId ? 'active' : ''}`;
+    opt.innerHTML = `
+      <div class="dropdown-option-header">
+        <span class="dropdown-option-name" title="${ch.name}">${ch.name}</span>
+        <span class="dropdown-option-count">${ch.solved}/${ch.goal}</span>
+      </div>
+      <div class="dropdown-option-progress-track">
+        <div class="dropdown-option-progress-fill" style="width: ${progressPct}%"></div>
+      </div>
+    `;
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.activeChapterId = ch.id;
+      saveToLocalStorage();
+      updateUI();
+      populateChapterDropdown();
+      chapterDropdown.classList.remove('open');
+    });
+    dropdownOptionsContainer.appendChild(opt);
+  });
+}
+
+
+// UI Refresh
+function updateUI() {
+  const ch = state.chapters.find(c => c.id === state.activeChapterId);
+  if (!ch) return;
+
+  // Update progress circle metrics for the active chapter
+  const chapterSolvedCountEl = document.getElementById('chapter-solved-count');
+  const chapterGoalLabelEl = document.getElementById('chapter-goal-label');
+  const progressChapterSubjectEl = document.getElementById('progress-chapter-subject');
+  
+  if (chapterSolvedCountEl) chapterSolvedCountEl.textContent = ch.solved;
+  if (chapterGoalLabelEl) chapterGoalLabelEl.textContent = `Goal: ${ch.goal}`;
+  if (progressChapterSubjectEl) progressChapterSubjectEl.textContent = ch.subject.toUpperCase();
+  
+  // Calculate Active Chapter progress ratio
+  const progressRatio = ch.solved / ch.goal;
+  
+  // Draw progress bar circle (596.902 is stroke-dasharray for radius 95)
+  const circ = 596.9;
+  const offset = progressRatio >= 1 ? 0 : circ - (progressRatio * circ);
+  progressBarEl.style.strokeDashoffset = offset;
+
+  // Streak update
+  streakCountEl.textContent = state.streak;
+  if (state.streak > 0) {
+    streakBadgeEl.classList.add('active');
+  } else {
+    streakBadgeEl.classList.remove('active');
+  }
+
+  // Update Stats Cards
+  const statTotalEl = document.getElementById('stat-total');
+  const statTodayEl = document.getElementById('stat-today');
+  
+  if (statTotalEl) statTotalEl.textContent = state.totalCount;
+  if (statTodayEl) statTodayEl.textContent = `${state.dailyCount}/${state.dailyGoal}`;
+
+  // Update Settings Inputs
+  goalValEl.textContent = state.dailyGoal;
+  toggleSound.checked = state.settings.sound;
+  toggleSparks.checked = state.settings.sparks;
+  toggleHaptics.checked = state.settings.haptics;
+
+  // Render list components
+  renderMasteryMilestones();
+  renderBadges();
+  renderCalendar();
+  renderHistory();
+}
+
+// Render Chapter-Specific Mastery Milestones
+function renderMasteryMilestones() {
+  if (!masteryContainer) return;
+  masteryContainer.innerHTML = '';
+  
+  const ch = state.chapters.find(c => c.id === state.activeChapterId);
+  if (!ch) {
+    masteryContainer.innerHTML = '<div class="history-empty">Select or add a chapter to begin.</div>';
+    return;
+  }
+  
+  const solved = ch.solved;
+  const goal = ch.goal;
+  let prevThreshold = 0;
+  
+  MASTERY_MILESTONE_DEFINITIONS.forEach(def => {
+    const threshold = Math.max(1, Math.round(goal * def.pct));
+    const isUnlocked = solved >= threshold;
+    
+    // Auto-award chapter milestones when crossed
+    if (isUnlocked && !ch.unlockedMilestones.includes(def.key)) {
+      ch.unlockedMilestones.push(def.key);
+      saveToLocalStorage();
+      
+      // Visual feedback timing offset
+      setTimeout(() => {
+        playBadgeSound();
+        showToast(`${ch.name}: Unlocked ${def.name}! ${def.icon}`, '🏆');
+        
+        // Spawn radial confetti around the plus button
+        const rect = pulseBtn.getBoundingClientRect();
+        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, true);
+      }, 350);
+    }
+    
+    // Relock milestones if progress drops below threshold (due to decrement)
+    if (!isUnlocked && ch.unlockedMilestones.includes(def.key)) {
+      ch.unlockedMilestones = ch.unlockedMilestones.filter(k => k !== def.key);
+      saveToLocalStorage();
+    }
+    
+    // Calculate milestone local progress percentage
+    let localProgress = 0;
+    if (isUnlocked) {
+      localProgress = 100;
+    } else {
+      const range = threshold - prevThreshold;
+      const progressInRange = solved - prevThreshold;
+      localProgress = Math.max(0, Math.min(100, Math.round((progressInRange / range) * 100)));
+    }
+    
+    const card = document.createElement('div');
+    card.className = `mastery-milestone-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+    card.title = def.desc;
+    card.innerHTML = `
+      <div class="milestone-icon">${isUnlocked ? def.icon : '🔒'}</div>
+      <div class="milestone-info">
+        <div class="milestone-header">
+          <span class="milestone-name">${def.name}</span>
+          <span class="milestone-status">${isUnlocked ? 'Completed' : `${solved}/${threshold} Qs`}</span>
+        </div>
+        <div class="milestone-progress-bar">
+          <div class="milestone-progress-fill" style="width: ${localProgress}%"></div>
+        </div>
+      </div>
+    `;
+    
+    masteryContainer.appendChild(card);
+    prevThreshold = threshold;
+  });
+}
+
+// Render Global Achievements
+function renderBadges() {
+  if (!badgesContainer) return;
+  badgesContainer.innerHTML = '';
+  
+  MILESTONES.forEach(badge => {
+    let isUnlocked = false;
+    
+    // Evaluate milestone logic
+    if (badge.type === 'total' && state.totalCount >= badge.target) {
+      isUnlocked = true;
+    } else if (badge.type === 'daily' && state.dailyCount >= badge.target) {
+      isUnlocked = true;
+    } else if (badge.type === 'streak' && state.streak >= badge.target) {
+      isUnlocked = true;
+    } else if (badge.type === 'goal_met') {
+      const metToday = state.dailyCount >= state.dailyGoal;
+      const metInHistory = state.history.some(h => h.goalCompleted);
+      isUnlocked = metToday || metInHistory;
+    }
+    
+    // Unlock state in memory & trigger notification
+    if (isUnlocked && !state.badges.includes(badge.id)) {
+      state.badges.push(badge.id);
+      saveToLocalStorage();
+      setTimeout(() => {
+        playBadgeSound();
+        showToast(`Unlocked Achievement: ${badge.name}! ${badge.icon}`, '🏆');
+        const rect = pulseBtn.getBoundingClientRect();
+        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, true);
+      }, 600);
+    }
+    
+    const card = document.createElement('div');
+    card.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
+    card.title = badge.desc;
+    card.innerHTML = `
+      <div class="badge-icon-wrapper">${isUnlocked ? badge.icon : '🔒'}</div>
+      <span class="badge-name">${badge.name}</span>
+    `;
+    badgesContainer.appendChild(card);
+  });
+}
+
+// Render Calendar Tab / Grid
+function renderCalendar() {
+  if (!calendarContainer) return;
+  
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const headerHtml = `
+    <div class="calendar-header">
+      <span>${monthNames[month]} ${year}</span>
+    </div>
+  `;
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  let gridHtml = '<div class="calendar-grid">';
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  dayNames.forEach(d => {
+    gridHtml += `<div class="calendar-day-header">${d}</div>`;
+  });
+  
+  for (let i = 0; i < firstDay; i++) {
+    gridHtml += `<div class="calendar-day empty"></div>`;
+  }
+  
+  const activityMap = {};
+  state.history.forEach(h => {
+    activityMap[h.date] = h;
+  });
+  
+  const todayStr = getTodayString();
+  activityMap[todayStr] = {
+    date: todayStr,
+    count: state.dailyCount,
+    chapters: state.todayLog || {}
+  };
+  
+  for (let i = 1; i <= daysInMonth; i++) {
+    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+    const activity = activityMap[dStr];
+    const count = activity ? activity.count : 0;
+    const hasAct = count > 0;
+    const isToday = dStr === todayStr;
+    
+    gridHtml += `
+      <div class="calendar-day ${hasAct ? 'has-activity' : ''} ${isToday ? 'today' : ''}" data-date="${dStr}">
+        <span class="calendar-date">${i}</span>
+        <span class="calendar-score ${hasAct ? '' : 'zero'}">${count > 0 ? count : '-'}</span>
+      </div>
+    `;
+  }
+  
+  gridHtml += '</div>';
+  calendarContainer.innerHTML = headerHtml + gridHtml;
+  
+  const days = calendarContainer.querySelectorAll('.calendar-day');
+  days.forEach(day => {
+    day.addEventListener('click', () => {
+      const dStr = day.getAttribute('data-date');
+      const activity = activityMap[dStr];
+      if (!activity || activity.count <= 0) return;
+      
+      if(calendarDayModal) {
+        calendarModalTitle.textContent = `Activity on ${dStr}`;
+        calendarModalTotal.textContent = `${activity.count} Qs`;
+        calendarModalList.innerHTML = '';
+        
+        if (!activity.chapters || Object.keys(activity.chapters).length === 0) {
+          // Fallback for legacy activity before chapter-level tracking was added
+          calendarModalList.innerHTML = `
+            <div class="calendar-detail-item">
+              <span class="cal-detail-name">General Practice</span>
+              <span class="cal-detail-score">${activity.count} Qs</span>
+            </div>
+          `;
+        } else {
+          Object.keys(activity.chapters).forEach(chId => {
+            const cnt = activity.chapters[chId];
+            if (cnt <= 0) return;
+            const chap = state.chapters.find(c => c.id === chId);
+            const name = chap ? chap.name : 'Unknown';
+            calendarModalList.innerHTML += `
+              <div class="calendar-detail-item">
+                <span class="cal-detail-name">${name}</span>
+                <span class="cal-detail-score">${cnt} Qs</span>
+              </div>
+            `;
+          });
+        }
+        
+        calendarDayModal.classList.add('open');
+      }
+    });
+  });
+}
+
+// Render History
+function renderHistory() {
+  if (!historyList) return;
+  
+  const items = historyList.querySelectorAll('.history-item');
+  items.forEach(el => el.remove());
+
+  if (state.history.length === 0) {
+    historyEmpty.style.display = 'block';
+    return;
+  }
+  historyEmpty.style.display = 'none';
+
+  state.history.forEach(item => {
+    const entry = document.createElement('div');
+    entry.className = `history-item ${item.goalCompleted ? 'goal-completed' : ''}`;
+    
+    const dateObj = new Date(item.date + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' });
+    
+    entry.innerHTML = `
+      <span class="history-date">${formattedDate}</span>
+      <div class="history-count-badge">
+        <span>${item.count}</span>
+        ${item.goalCompleted ? '<span>✓</span>' : ''}
+      </div>
+    `;
+    historyList.appendChild(entry);
+  });
+}
+
+// Toast Notification System
+function showToast(message, icon = '✨') {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-msg');
+  const toastIcon = toast.querySelector('.toast-icon');
+  
+  toastIcon.textContent = icon;
+  toastMsg.textContent = message;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3200);
+}
+
+// Satisfying floating +1 animator
+function createFloatingPlus(x, y) {
+  const floating = document.createElement('span');
+  floating.className = 'floating-plus';
+  floating.textContent = '+1';
+  floating.style.left = `${x}px`;
+  floating.style.top = `${y}px`;
+  
+  const randomDriftX = (Math.random() - 0.5) * 30;
+  floating.style.setProperty('--drift-x', `${randomDriftX}px`);
+  
+  document.body.appendChild(floating);
+  
+  setTimeout(() => {
+    floating.remove();
+  }, 850);
+}
+
+// Trigger study progress increment on click
+function handleIncrement(e) {
+  let clickX = e.clientX;
+  let clickY = e.clientY;
+  
+  if (!clickX || !clickY) {
+    const rect = pulseBtn.getBoundingClientRect();
+    clickX = rect.left + rect.width / 2;
+    clickY = rect.top + rect.height / 2;
+  }
+
+  // Active auditory feedback (synthetic bubble pop)
+  playClickSound();
+
+  // Active visual feedback (confetti particles)
+  spawnParticles(clickX, clickY, false);
+  
+  // Floating text +1
+  createFloatingPlus(clickX - 15, clickY - 20);
+
+  // Active CSS button rebound animation
+  pulseBtn.classList.remove('click-trigger', 'bounce');
+  void pulseBtn.offsetWidth; // Trigger reflow
+  pulseBtn.classList.add('click-trigger', 'bounce');
+  
+  // Active Haptic Simulation
+  if (state.settings.haptics) {
+    const container = document.querySelector('.app-container');
+    container.classList.remove('haptic-shake', 'haptic-flash');
+    void container.offsetWidth; // Trigger reflow
+    container.classList.add('haptic-shake', 'haptic-flash');
+    if (navigator.vibrate) {
+      navigator.vibrate(18);
+    }
+  }
+
+  // Update State counters
+  state.totalCount++;
+  state.dailyCount++;
+  
+  // Update Active Chapter count
+  const ch = state.chapters.find(c => c.id === state.activeChapterId);
+  if (ch) {
+    ch.solved++;
+  }
+  
+  // Update today's calendar log
+  if (!state.todayLog) state.todayLog = {};
+  state.todayLog[state.activeChapterId] = (state.todayLog[state.activeChapterId] || 0) + 1;
+  
+  // If user reaches daily goal for the first time today
+  if (state.dailyCount === state.dailyGoal) {
+    state.streak++;
+    saveToLocalStorage();
+    
+    // Celebration effects
+    setTimeout(() => {
+      playGoalSound();
+      spawnParticles(clickX, clickY - 50, true);
+      showToast(`Daily Goal Hit! 🔥 Streak: ${state.streak} Days!`, '🎯');
+      updateUI();
+      populateChapterDropdown();
+    }, 280);
+  } else {
+    saveToLocalStorage();
+    updateUI();
+    populateChapterDropdown();
+  }
+}
+
+// Trigger study progress decrement on click (revert accidental clicks)
+function handleDecrement(e) {
+  e.stopPropagation();
+  
+  const ch = state.chapters.find(c => c.id === state.activeChapterId);
+  if (!ch) return;
+  
+  // Do not decrement below 0
+  if (ch.solved <= 0) {
+    showToast("Progress is already at 0!", "⚠️");
+    return;
+  }
+  
+  // Update counters
+  ch.solved = Math.max(0, ch.solved - 1);
+  state.totalCount = Math.max(0, state.totalCount - 1);
+  state.dailyCount = Math.max(0, state.dailyCount - 1);
+  
+  // Update today's calendar log
+  if (state.todayLog && state.todayLog[state.activeChapterId] > 0) {
+    state.todayLog[state.activeChapterId]--;
+  }
+  
+  // Play bubble pop click sound
+  playClickSound();
+  
+  // CSS bounce feedback on decrement button
+  const decBtn = document.getElementById('decrement-btn');
+  if (decBtn) {
+    decBtn.classList.remove('click-trigger');
+    void decBtn.offsetWidth; // Trigger reflow
+    decBtn.classList.add('click-trigger');
+  }
+  
+  saveToLocalStorage();
+  updateUI();
+  populateChapterDropdown();
+  
+  showToast("Reverted: Solved count decreased.", "➖");
+}
+
+// Render Chapters List inside Management Modal
+function renderManageChaptersList() {
+  if (!manageChaptersList) return;
+  manageChaptersList.innerHTML = '';
+  
+  let filtered = state.chapters;
+  if (activeSubjectFilter !== 'All') {
+    filtered = state.chapters.filter(ch => ch.subject === activeSubjectFilter);
+  }
+  
+  if (filtered.length === 0) {
+    manageChaptersList.innerHTML = '<div class="history-empty">No chapters found under this subject.</div>';
+    return;
+  }
+  
+  filtered.forEach(ch => {
+    const item = document.createElement('div');
+    item.className = 'manage-chapter-item';
+    item.innerHTML = `
+      <div class="manage-chapter-info">
+        <span class="manage-chapter-name">${ch.name}</span>
+        <span class="manage-chapter-meta">${ch.subject} • Target: ${ch.goal} Qs • Solved: ${ch.solved}</span>
+      </div>
+      <div class="manage-chapter-actions">
+        <button class="action-icon-btn edit" data-id="${ch.id}" title="Edit Chapter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="action-icon-btn delete" data-id="${ch.id}" title="Delete Chapter">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+    
+    // Add item click actions
+    item.querySelector('.edit').addEventListener('click', () => startEditChapter(ch.id));
+    item.querySelector('.delete').addEventListener('click', () => deleteChapter(ch.id));
+    
+    manageChaptersList.appendChild(item);
+  });
+}
+
+// Begin Edit Chapter Mode
+function startEditChapter(id) {
+  const ch = state.chapters.find(c => c.id === id);
+  if (!ch) return;
+  
+  editChapterIdInput.value = ch.id;
+  editChapterNameInput.value = ch.name;
+  editChapterSubjectSelect.value = ch.subject;
+  if (editChapterClassSelect) {
+    editChapterClassSelect.value = ch.classYear || 11;
+  }
+  editChapterGoalInput.value = ch.goal;
+  
+  editChapterSection.style.display = 'block';
+  editChapterSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Delete Chapter Action
+function deleteChapter(id) {
+  const ch = state.chapters.find(c => c.id === id);
+  if (!ch) return;
+  
+  // Enforce at least one chapter remaining
+  if (state.chapters.length <= 1) {
+    alert('Syllabus must have at least one chapter.');
+    return;
+  }
+  
+  if (confirm(`Are you sure you want to delete the chapter "${ch.name}"? This will clear all its solved progress data.`)) {
+    state.chapters = state.chapters.filter(c => c.id !== id);
+    
+    // Re-assign active chapter if we deleted it
+    if (state.activeChapterId === id) {
+      state.activeChapterId = state.chapters[0].id;
+    }
+    
+    saveToLocalStorage();
+    populateChapterDropdown();
+    renderManageChaptersList();
+    
+    if (editChapterIdInput.value === id) {
+      editChapterSection.style.display = 'none';
+    }
+    
+    updateUI();
+    showToast('Chapter deleted.', '🗑️');
+  }
+}
+
+// Setup Event Listeners
+pulseBtn.addEventListener('click', handleIncrement);
+if (decrementBtn) {
+  decrementBtn.addEventListener('click', handleDecrement);
+}
+
+// Custom Dropdown Open/Close Event
+chapterDropdownSelected.addEventListener('click', (e) => {
+  e.stopPropagation();
+  chapterDropdown.classList.toggle('open');
+});
+
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+  if (!chapterDropdown.contains(e.target)) {
+    chapterDropdown.classList.remove('open');
+  }
+});
+
+if (calendarModalClose) {
+  calendarModalClose.addEventListener('click', () => {
+    calendarDayModal.classList.remove('open');
+  });
+  calendarDayModal.addEventListener('click', (e) => {
+    if (e.target === calendarDayModal) calendarDayModal.classList.remove('open');
+  });
+}
+
+// Dropdown Tabs click events
+dropdownTabBtns.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownTabBtns.forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    activeDropdownSubject = e.target.getAttribute('data-subject');
+    populateChapterDropdown();
+    playClickSound(); // optional small satisfying sound
+  });
+});
+
+// Dropdown Class click events (+1 vs +2)
+dropdownClassBtns.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownClassBtns.forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    activeDropdownClass = e.target.getAttribute('data-class');
+    populateChapterDropdown();
+    playClickSound();
+  });
+});
+
+// Settings Modals Handlers
+settingsTrigger.addEventListener('click', () => {
+  initAudio();
+  settingsModal.classList.add('open');
+});
+
+settingsClose.addEventListener('click', () => {
+  settingsModal.classList.remove('open');
+});
+
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) {
+    settingsModal.classList.remove('open');
+  }
+});
+
+// Goal adjustment controls
+goalDecBtn.addEventListener('click', () => {
+  if (state.dailyGoal > 1) {
+    state.dailyGoal--;
+    saveToLocalStorage();
+    updateUI();
+    playClickSound();
+  }
+});
+
+goalIncBtn.addEventListener('click', () => {
+  if (state.dailyGoal < 100) {
+    state.dailyGoal++;
+    saveToLocalStorage();
+    updateUI();
+    playClickSound();
+  }
+});
+
+// Settings Toggles
+toggleSound.addEventListener('change', (e) => {
+  state.settings.sound = e.target.checked;
+  saveToLocalStorage();
+  if (state.settings.sound) playClickSound();
+});
+
+toggleSparks.addEventListener('change', (e) => {
+  state.settings.sparks = e.target.checked;
+  saveToLocalStorage();
+});
+
+toggleHaptics.addEventListener('change', (e) => {
+  state.settings.haptics = e.target.checked;
+  saveToLocalStorage();
+  if (state.settings.haptics && navigator.vibrate) navigator.vibrate([30]);
+});
+
+// Reset progress data
+resetDataBtn.addEventListener('click', () => {
+  if (confirm('Are you absolutely sure you want to delete all daily targets, streaks, history, and achievements? All chapters will have progress reset back to 0.')) {
+    state = {
+      totalCount: 0,
+      dailyCount: 0,
+      dailyGoal: 10,
+      streak: 0,
+      lastActiveDate: getTodayString(),
+      history: [],
+      badges: [],
+      chapters: DEFAULT_CHAPTERS.map(ch => ({
+        ...ch,
+        solved: 0,
+        goal: 250,
+        unlockedMilestones: []
+      })),
+      activeChapterId: DEFAULT_CHAPTERS[0].id,
+      settings: {
+        sound: true,
+        sparks: true,
+        haptics: true
+      }
+    };
+    saveToLocalStorage();
+    populateChapterDropdown();
+    updateUI();
+    settingsModal.classList.remove('open');
+    showToast('All progress reset.', '🗑️');
+  }
+});
+
+// Manage Chapters Modal Actions
+manageChaptersBtn.addEventListener('click', () => {
+  initAudio();
+  manageChaptersModal.classList.add('open');
+  activeSubjectFilter = 'All';
+  filterTabBtns.forEach(btn => {
+    if (btn.getAttribute('data-subject') === 'All') {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  renderManageChaptersList();
+});
+
+manageChaptersClose.addEventListener('click', () => {
+  manageChaptersModal.classList.remove('open');
+  editChapterSection.style.display = 'none';
+});
+
+manageChaptersModal.addEventListener('click', (e) => {
+  if (e.target === manageChaptersModal) {
+    manageChaptersModal.classList.remove('open');
+    editChapterSection.style.display = 'none';
+  }
+});
+
+// Tab filters clicks
+filterTabBtns.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    filterTabBtns.forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    activeSubjectFilter = e.target.getAttribute('data-subject');
+    renderManageChaptersList();
+    playClickSound();
+  });
+});
+
+// Add Chapter Form Submit
+addChapterForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = newChapterNameInput.value.trim();
+  const subject = newChapterSubjectSelect.value;
+  const classYearVal = newChapterClassSelect ? parseInt(newChapterClassSelect.value) : 11;
+  const goal = parseInt(newChapterGoalInput.value) || 250;
+  
+  if (!name) return;
+  
+  const newId = 'ch_' + Date.now();
+  state.chapters.push({
+    id: newId,
+    name,
+    subject,
+    classYear: classYearVal,
+    solved: 0,
+    goal,
+    unlockedMilestones: []
+  });
+  
+  saveToLocalStorage();
+  
+  // Auto-activate the newly added chapter
+  state.activeChapterId = newId;
+  saveToLocalStorage();
+  
+  newChapterNameInput.value = '';
+  newChapterGoalInput.value = '250';
+  
+  populateChapterDropdown();
+  renderManageChaptersList();
+  updateUI();
+  
+  showToast('Chapter added successfully!', '➕');
+});
+
+// Edit Chapter Form Submit
+editChapterForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const id = editChapterIdInput.value;
+  const ch = state.chapters.find(c => c.id === id);
+  if (!ch) return;
+  
+  ch.name = editChapterNameInput.value.trim();
+  ch.subject = editChapterSubjectSelect.value;
+  if (editChapterClassSelect) {
+    ch.classYear = parseInt(editChapterClassSelect.value);
+  }
+  const oldGoal = ch.goal;
+  ch.goal = parseInt(editChapterGoalInput.value) || 250;
+  
+  // Re-verify milestones if goal was reduced
+  if (ch.goal !== oldGoal) {
+    ch.unlockedMilestones = []; // will be recalculated on render
+  }
+  
+  saveToLocalStorage();
+  populateChapterDropdown();
+  renderManageChaptersList();
+  updateUI();
+  
+  editChapterSection.style.display = 'none';
+  showToast('Chapter updated successfully!', '✏️');
+});
+
+// Edit Chapter Cancel
+editChapterCancelBtn.addEventListener('click', () => {
+  editChapterSection.style.display = 'none';
+});
+
+// Initial boot initialization
+loadFromLocalStorage();
+populateChapterDropdown();
+updateUI();
+
+// Register Service Worker for PWA / APK Conversion
+if (false /* disabled for local file */) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}
+</script>
+</body>
+</html>
