@@ -88,7 +88,6 @@ function getStorageKey(userId) {
   return `questpulse_${userId || currentUser}_state`;
 }
 
-// Populate user selection popup with preview data
 async function populateUserSelectPopup() {
   for (const [idx, userId] of ['user1', 'user2'].entries()) {
     const nameEl = document.getElementById(`${userId}-name`);
@@ -96,20 +95,31 @@ async function populateUserSelectPopup() {
     nameEl.textContent = `Profile ${idx + 1}`;
 
     try {
-      let data = null;
+      let serverState = null;
+      let localState = null;
 
       if (useServerStorage) {
-        const res = await fetch(`/api/data/${userId}`);
-        data = await res.json();
-      } else {
-        const saved = localStorage.getItem(getStorageKey(userId));
-        if (saved) data = JSON.parse(saved);
+        try {
+          const res = await fetch(`/api/data/${userId}`);
+          if (res.ok) serverState = await res.json();
+        } catch (e) {
+          console.error('Server preview load failed:', e);
+        }
       }
 
-      if (data && data.totalCount !== undefined) {
-        const total = data.totalCount || 0;
-        const streak = data.streak || 0;
-        const chaptersCount = (data.chapters || []).length;
+      try {
+        const saved = localStorage.getItem(getStorageKey(userId));
+        if (saved) localState = JSON.parse(saved);
+      } catch (e) {
+        console.error('Local preview load failed:', e);
+      }
+
+      const merged = mergeStates(serverState, localState);
+
+      if (merged && merged.totalCount !== undefined) {
+        const total = merged.totalCount || 0;
+        const streak = merged.streak || 0;
+        const chaptersCount = (merged.chapters || []).length;
         metaEl.textContent = `${total} Qs solved • ${streak}d streak • ${chaptersCount} chapters`;
       } else {
         metaEl.textContent = 'New — no data yet';
@@ -119,7 +129,6 @@ async function populateUserSelectPopup() {
     }
   }
 }
-
 // Show user selection overlay
 async function showUserSelectPopup() {
   await populateUserSelectPopup();
@@ -571,62 +580,238 @@ async function saveToServer() {
   }
 }
 
-// Load user data (auto-selects server or localStorage)
+// Helper to merge server state and local state field-by-field, ensuring no progress is ever lost
+function mergeStates(stateA, stateB) {
+  if (!stateA && !stateB) return null;
+  if (!stateA) return stateB;
+  if (!stateB) return stateA;
+
+  // Settings
+  const settings = {
+    sound: stateA.settings?.sound ?? stateB.settings?.sound ?? true,
+    sparks: stateA.settings?.sparks ?? stateB.settings?.sparks ?? true,
+    haptics: stateA.settings?.haptics ?? stateB.settings?.haptics ?? true
+  };
+
+  // Chapters: take maximum solved and merge milestones
+  const mergedChapters = [];
+  const allChapterIds = new Set([
+    ...(stateA.chapters || []).map(c => c.id),
+    ...(stateB.chapters || []).map(c => c.id),
+    ...DEFAULT_CHAPTERS.map(c => c.id)
+  ]);
+
+  allChapterIds.forEach(id => {
+    const chA = (stateA.chapters || []).find(c => c.id === id);
+    const chB = (stateB.chapters || []).find(c => c.id === id);
+    const chDefault = DEFAULT_CHAPTERS.find(c => c.id === id);
+
+    const base = chA || chB || chDefault;
+    if (!base) return;
+
+    const solvedA = chA ? (chA.solved || 0) : 0;
+    const solvedB = chB ? (chB.solved || 0) : 0;
+    const solved = Math.max(solvedA, solvedB);
+
+    const goal = chA?.goal || chB?.goal || chDefault?.goal || 250;
+    const classYear = chA?.classYear || chB?.classYear || chDefault?.classYear || 11;
+    const subject = chA?.subject || chB?.subject || chDefault?.subject || 'Physics';
+    const name = chA?.name || chB?.name || chDefault?.name || '';
+
+    // Merge unlockedMilestones
+    const milestonesSet = new Set([
+      ...(chA?.unlockedMilestones || []),
+      ...(chB?.unlockedMilestones || [])
+    ]);
+
+    mergedChapters.push({
+      id,
+      name,
+      subject,
+      classYear,
+      solved,
+      goal,
+      unlockedMilestones: Array.from(milestonesSet)
+    });
+  });
+
+  // Calculate total solved count from merged chapters
+  const totalCount = mergedChapters.reduce((sum, ch) => sum + ch.solved, 0);
+
+  // TodayLog: merge todayLog values (take max solved count per chapter for today)
+  const todayLog = {};
+  const todayLogKeys = new Set([
+    ...Object.keys(stateA.todayLog || {}),
+    ...Object.keys(stateB.todayLog || {})
+  ]);
+  todayLogKeys.forEach(k => {
+    todayLog[k] = Math.max(stateA.todayLog?.[k] || 0, stateB.todayLog?.[k] || 0);
+  });
+
+  // DailyHistory: merge day counts and day details
+  const dailyHistory = {};
+  const allHistoryDays = new Set([
+    ...Object.keys(stateA.dailyHistory || {}),
+    ...Object.keys(stateB.dailyHistory || {})
+  ]);
+  allHistoryDays.forEach(day => {
+    const dayA = stateA.dailyHistory?.[day] || {};
+    const dayB = stateB.dailyHistory?.[day] || {};
+
+    const countA = dayA.count || 0;
+    const countB = dayB.count || 0;
+
+    // Merge chapter breakdown for this day
+    const chBreakdown = {};
+    const chKeys = new Set([
+      ...Object.keys(dayA.chapters || {}),
+      ...Object.keys(dayB.chapters || {})
+    ]);
+    chKeys.forEach(chId => {
+      chBreakdown[chId] = Math.max(dayA.chapters?.[chId] || 0, dayB.chapters?.[chId] || 0);
+    });
+
+    const computedCount = Object.values(chBreakdown).reduce((sum, val) => sum + val, 0);
+    const count = Math.max(countA, countB, computedCount);
+
+    dailyHistory[day] = {
+      count,
+      chapters: chBreakdown
+    };
+  });
+
+  // History logs: union logs by action string / timestamp to avoid duplicates
+  const historyMap = new Map();
+  const allHistoryLogs = [...(stateA.history || []), ...(stateB.history || [])];
+  allHistoryLogs.forEach(log => {
+    if (log && typeof log === 'object') {
+      const key = `${log.timestamp || ''}_${log.action || ''}_${log.chapterId || ''}`;
+      historyMap.set(key, log);
+    }
+  });
+  const history = Array.from(historyMap.values()).sort((a, b) => {
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+
+  // Badges: union
+  const badgesSet = new Set([...(stateA.badges || []), ...(stateB.badges || [])]);
+  const badges = Array.from(badgesSet);
+
+  // Active Chapter ID
+  const activeChapterId = stateA.activeChapterId || stateB.activeChapterId || 'p1';
+
+  // Streak & Last Active Date & Daily Goal
+  const dailyGoal = Math.max(stateA.dailyGoal || 10, stateB.dailyGoal || 10);
+  
+  let lastActiveDate = stateA.lastActiveDate || stateB.lastActiveDate || '';
+  let streak = Math.max(stateA.streak || 0, stateB.streak || 0);
+  let dailyCount = 0;
+
+  if (stateA.lastActiveDate && stateB.lastActiveDate) {
+    if (stateA.lastActiveDate === stateB.lastActiveDate) {
+      dailyCount = Math.max(stateA.dailyCount || 0, stateB.dailyCount || 0);
+    } else {
+      const dateA = new Date(stateA.lastActiveDate + 'T00:00:00');
+      const dateB = new Date(stateB.lastActiveDate + 'T00:00:00');
+      if (dateA > dateB) {
+        lastActiveDate = stateA.lastActiveDate;
+        streak = stateA.streak || 0;
+        dailyCount = stateA.dailyCount || 0;
+      } else {
+        lastActiveDate = stateB.lastActiveDate;
+        streak = stateB.streak || 0;
+        dailyCount = stateB.dailyCount || 0;
+      }
+    }
+  } else {
+    dailyCount = stateA.dailyCount || stateB.dailyCount || 0;
+  }
+
+  return {
+    totalCount,
+    dailyCount,
+    dailyGoal,
+    streak,
+    lastActiveDate,
+    history,
+    todayLog,
+    badges,
+    chapters: mergedChapters,
+    activeChapterId,
+    dailyHistory,
+    settings
+  };
+}
+
+// Load user data (auto-selects server or localStorage, and performs robust merge)
 async function loadUserData() {
   if (!currentUser) return;
 
-  let parsed = null;
+  let serverState = null;
+  let localState = null;
 
+  // 1. Try to load from server
   if (useServerStorage) {
     try {
       const res = await fetch(`/api/data/${currentUser}`);
-      parsed = await res.json();
+      if (res.ok) {
+        serverState = await res.json();
+      }
     } catch (e) {
-      console.error('Server load failed, trying localStorage:', e);
+      console.error('Server load failed:', e);
     }
   }
 
-  // Fallback to localStorage if server didn't return data
-  if (!parsed) {
+  // 2. Try to load from localStorage
+  try {
     const saved = localStorage.getItem(getStorageKey());
     if (saved) {
-      try { parsed = JSON.parse(saved); } catch (e) { /* ignore */ }
+      localState = JSON.parse(saved);
     }
+  } catch (e) {
+    console.error('LocalStorage load failed:', e);
   }
 
-  if (parsed) {
+  // 3. Merge server state and local state
+  const merged = mergeStates(serverState, localState);
+
+  if (merged) {
+    state = merged;
+    // Post the merged/recovered state back to both storages to keep them synchronized
+    saveToLocalStorage();
+  } else {
+    // New profile initialization
     state = {
-      totalCount: parsed.totalCount || 0,
-      dailyCount: parsed.dailyCount || 0,
-      dailyGoal: parsed.dailyGoal || 10,
-      streak: parsed.streak || 0,
-      lastActiveDate: parsed.lastActiveDate || '',
-      history: parsed.history || [],
-      todayLog: parsed.todayLog || {},
-      badges: parsed.badges || [],
-      chapters: (parsed.chapters && parsed.chapters.length > 0) ? parsed.chapters : [...DEFAULT_CHAPTERS],
-      activeChapterId: parsed.activeChapterId || 'p1',
-      dailyHistory: parsed.dailyHistory || {},
+      totalCount: 0,
+      dailyCount: 0,
+      dailyGoal: 10,
+      streak: 0,
+      lastActiveDate: '',
+      history: [],
+      todayLog: {},
+      badges: [],
+      chapters: [...DEFAULT_CHAPTERS],
+      activeChapterId: 'p1',
+      dailyHistory: {},
       settings: {
-        sound: parsed.settings?.sound ?? true,
-        sparks: parsed.settings?.sparks ?? true,
-        haptics: parsed.settings?.haptics ?? true
+        sound: true,
+        sparks: true,
+        haptics: true
       }
     };
-
-    state.chapters.forEach(c => {
-      if (!c.unlockedMilestones) c.unlockedMilestones = [];
-      if (!c.classYear) {
-        const defaultCh = DEFAULT_CHAPTERS.find(dc => dc.id === c.id);
-        c.classYear = defaultCh ? defaultCh.classYear : 11;
-      }
-    });
   }
+
+  // Standardize chapter keys in active state
+  state.chapters.forEach(c => {
+    if (!c.unlockedMilestones) c.unlockedMilestones = [];
+    if (!c.classYear) {
+      const defaultCh = DEFAULT_CHAPTERS.find(dc => dc.id === c.id);
+      c.classYear = defaultCh ? defaultCh.classYear : 11;
+    }
+  });
 
   checkNewDay();
 }
-
-// Legacy alias
 function loadFromLocalStorage() {
   // No-op: loading now happens via loadUserData in selectUser
 }
