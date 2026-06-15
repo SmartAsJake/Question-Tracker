@@ -11,7 +11,7 @@ import json
 import os
 import sys
 
-PORT = 8080
+PORT = int(os.environ.get('PORT', 8080))
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 VALID_USERS = ['user1', 'user2']
 
@@ -173,7 +173,7 @@ class QuestPulseHandler(http.server.BaseHTTPRequestHandler):
 
 
 def main():
-    server = http.server.HTTPServer(('', PORT), QuestPulseHandler)
+    server = http.server.HTTPServer(('0.0.0.0', PORT), QuestPulseHandler)
     print(f'\n  ✨ QuestPulse Server running at http://localhost:{PORT}\n')
     print(f'  📁 User data stored in: {DATA_DIR}/')
     print(f'  👤 Supported profiles: {", ".join(VALID_USERS)}\n')
